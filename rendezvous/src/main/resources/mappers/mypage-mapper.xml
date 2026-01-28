@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="edu.kh.project.mypage.model.mapper.MyPageMapper">
+
+	<update id="updateDistance" parameterType="Member">
+		UPDATE MEMBER
+		SET
+		SEARCH_DISTANCE = #{searchDistance}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<update id="updateGender" parameterType="Member">
+		UPDATE MEMBER
+		SET
+		TARGET_GENDER = #{targetGender}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<update id="updateAgeRange" parameterType="Member">
+		UPDATE MEMBER
+		SET
+		TARGET_MIN_AGE = #{targetMinAge},
+		TARGET_MAX_AGE = #{targetMaxAge}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<update id="updateVisibility" parameterType="Member">
+		UPDATE MEMBER
+		SET
+		PROFILE_OPEN = #{profileOpen} WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<insert id="insertBlockContact" parameterType="BlockContact">
+		INSERT INTO
+		BLOCK_CONTACT (
+		BLOCK_ID,
+		MEMBER_NO,
+		TARGET_NAME,
+		TARGET_PHONE,
+		TARGET_EMAIL
+		) VALUES (
+		SEQ_BLOCK_CONTACT_NO.NEXTVAL,
+		#{memberNo},
+		#{targetName},
+		#{targetPhone},
+		#{targetEmail}
+		)
+	</insert>
+
+	<select id="selectBlockList" parameterType="_int"
+		resultType="BlockContact">
+		SELECT BLOCK_ID, TARGET_NAME, TARGET_PHONE, TARGET_EMAIL,
+		CREATED_AT
+		FROM BLOCK_CONTACT
+		WHERE MEMBER_NO = #{memberNo}
+		ORDER BY
+		BLOCK_ID DESC
+	</select>
+
+	<delete id="deleteBlockContact" parameterType="BlockContact">
+		DELETE FROM
+		BLOCK_CONTACT
+		WHERE BLOCK_ID = #{blockId}
+		AND MEMBER_NO = #{memberNo}
+	</delete>
+
+</mapper>
