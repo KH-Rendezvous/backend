@@ -6,7 +6,7 @@
 	<update id="updateDistance" parameterType="Member">
 		UPDATE MEMBER
 		SET
-		SEARCH_DISTANCE = #{searchDistance}
+		SEARCH_DISTANCE = #{searchDistance, jdbcType=NUMERIC}
 		WHERE MEMBER_NO = #{memberNo}
 	</update>
 
@@ -21,7 +21,7 @@
 		UPDATE MEMBER
 		SET
 		TARGET_MIN_AGE = #{targetMinAge},
-		TARGET_MAX_AGE = #{targetMaxAge}
+		TARGET_MAX_AGE = #{targetMaxAge, jdbcType=NUMERIC}
 		WHERE MEMBER_NO = #{memberNo}
 	</update>
 
@@ -30,39 +30,112 @@
 		SET
 		PROFILE_OPEN = #{profileOpen} WHERE MEMBER_NO = #{memberNo}
 	</update>
+	
+	<update id="updateMemberProfile" parameterType="MemberProfileRequest">
+        MERGE INTO MEMBER_PROFILE T
+        USING DUAL ON (T.MEMBER_NO = #{memberNo})
+        WHEN MATCHED THEN
+            UPDATE SET 
+                INTRO = #{intro}, 
+                HEIGHT = #{height}, 
+                MBTI = #{mbti}, 
+                REGION_ID = #{regionId},
+                SCH_NO = #{schNo}
+        WHEN NOT MATCHED THEN
+            INSERT (MEMBER_NO, INTRO, HEIGHT, MBTI, REGION_ID, BIRTH_DATE, GENDER, SCH_NO)
+            VALUES (#{memberNo}, #{intro}, #{height}, #{mbti}, #{regionId}, SYSDATE, 'M', #{schNo})
+    </update>
 
-	<insert id="insertBlockContact" parameterType="BlockContact">
-		INSERT INTO
-		BLOCK_CONTACT (
-		BLOCK_ID,
-		MEMBER_NO,
-		TARGET_NAME,
-		TARGET_PHONE,
-		TARGET_EMAIL
-		) VALUES (
-		SEQ_BLOCK_CONTACT_NO.NEXTVAL,
-		#{memberNo},
-		#{targetName},
-		#{targetPhone},
-		#{targetEmail}
-		)
-	</insert>
+    <update id="updateMemberCommon" parameterType="MemberProfileRequest">
+        UPDATE MEMBER SET
+        NICKNAME = #{nickname},
+        REL_INTENT_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{relationship}),
+        AFFECT_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{affection}),
+        EDU_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{education}),
+        COMM_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{contact}),
+        ZODIAC_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{zodiac}),
+        EXERCISE_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{exercise}),
+        DRINK_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{drinking}),
+        SMOKE_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{smoking}),
+        SNS_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{social})
+        WHERE MEMBER_NO = #{memberNo}
+    </update>
 
-	<select id="selectBlockList" parameterType="_int"
-		resultType="BlockContact">
-		SELECT BLOCK_ID, TARGET_NAME, TARGET_PHONE, TARGET_EMAIL,
-		CREATED_AT
-		FROM BLOCK_CONTACT
-		WHERE MEMBER_NO = #{memberNo}
-		ORDER BY
-		BLOCK_ID DESC
+    <delete id="deleteInterests" parameterType="_int">
+        DELETE FROM MEMBER_INTERESTS WHERE MEMBER_NO = #{memberNo}
+    </delete>
+
+    <insert id="insertInterest" parameterType="map">
+        INSERT INTO MEMBER_INTERESTS (MEMBER_NO, INTEREST_ID)
+        VALUES (#{memberNo}, (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{interest}))
+    </insert>
+    
+    <select id="selectMemberProfile" parameterType="_int" resultType="MemberProfileRequest">
+        SELECT 
+            M.MEMBER_NO,
+            M.NICKNAME,
+            S.SCH_NAME AS SCHOOL_NAME,
+            P.SCH_NO,
+            P.INTRO,
+            P.MBTI,
+            P.GENDER,
+            TO_CHAR(P.HEIGHT) AS HEIGHT, 
+            R.FULL_ADDR AS REGION_NAME,
+            P.REGION_ID,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.REL_INTENT_ID) AS RELATIONSHIP,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.AFFECT_ID)     AS AFFECTION,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.EDU_ID)        AS EDUCATION,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.COMM_ID)       AS CONTACT,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.ZODIAC_ID)     AS ZODIAC,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.EXERCISE_ID)   AS EXERCISE,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.DRINK_ID)      AS DRINKING,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.SMOKE_ID)      AS SMOKING,
+            (SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.SNS_ID)        AS SOCIAL
+            
+        FROM MEMBER M
+        LEFT JOIN MEMBER_PROFILE P ON M.MEMBER_NO = P.MEMBER_NO
+        LEFT JOIN SCHOOL S ON P.SCH_NO = S.SCH_NO
+        LEFT JOIN MASTER_REGIONS R ON P.REGION_ID = R.REGION_ID
+        WHERE M.MEMBER_NO = #{memberNo}
+    </select>
+
+    <select id="selectMemberInterests" parameterType="_int" resultType="string">
+        SELECT C.CODE_NAME
+        FROM MEMBER_INTERESTS I
+        JOIN MASTER_CODES C ON I.INTEREST_ID = C.CODE_ID
+        WHERE I.MEMBER_NO = #{memberNo}
+    </select>
+    
+    <select id="searchSchool" resultType="map">
+        SELECT SCH_NO, SCH_NAME, SCH_REGION 
+        FROM SCHOOL 
+        WHERE SCH_NAME LIKE '%' || #{keyword} || '%'
+        ORDER BY SCH_NAME ASC
+    </select>
+    
+    <select id="searchRegion" resultType="map">
+        SELECT REGION_ID, FULL_ADDR 
+        FROM MASTER_REGIONS
+        WHERE FULL_ADDR LIKE '%' || #{keyword} || '%'
+        ORDER BY REGION_ID ASC
+    </select>
+
+	<select id="selectAllMasterCodes" resultType="MasterCode">
+		SELECT
+		CODE_ID,
+		CATEGORY,
+		CODE_NAME,
+		EMOJI,
+		SORT_ORDER
+		FROM MASTER_CODES
+		ORDER BY CATEGORY, SORT_ORDER
 	</select>
-
-	<delete id="deleteBlockContact" parameterType="BlockContact">
-		DELETE FROM
-		BLOCK_CONTACT
-		WHERE BLOCK_ID = #{blockId}
-		AND MEMBER_NO = #{memberNo}
-	</delete>
+	
+	<select id="checkNickname" resultType="_int">
+		SELECT COUNT(*)
+		FROM "MEMBER"
+		WHERE NICKNAME = #{nickname}
+		AND DEL_FL = 'N'
+	</select>
 
 </mapper>

@@ -18,9 +18,5 @@ public interface MemberMapper {
     
     // 차단 해제
     int deleteBlockContact(BlockContact blockContact);
-    
-    int updateMemberProfile(MemberProfileRequest req);
-    int updateMemberCommon(MemberProfileRequest req);
-    int deleteInterests(int memberNo);
-    int insertInterest(@Param("memberNo") int memberNo, @Param("interest") String interest);
+
 }

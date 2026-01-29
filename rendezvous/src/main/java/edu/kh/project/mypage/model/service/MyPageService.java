@@ -1,10 +1,12 @@
 package edu.kh.project.mypage.model.service;
 
-import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Map;
 
+import edu.kh.project.member.model.dto.MasterCode;
 import edu.kh.project.member.model.dto.Member;
+import edu.kh.project.member.model.dto.MemberProfileRequest;
 
-@Service
 public interface MyPageService {
 	
 	/** 거리 설정 수정 서비스
@@ -18,5 +20,17 @@ public interface MyPageService {
 	int updateAgeRange(Member member);
 	
 	int updateVisibility(Member member);
+	
+	int updateProfile(MemberProfileRequest req);
+	
+	MemberProfileRequest getProfile(int memberNo);
+	
+	List<Map<String, Object>> searchSchool(String keyword);
+	
+	List<Map<String, Object>> searchRegion(String keyword);
+	
+	List<MasterCode> getAllMasterCodes();
+
+	int checkNickname(String nickname);
 
 }

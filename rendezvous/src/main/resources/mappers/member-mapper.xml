@@ -1,56 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper
-	namespace="edu.kh.project.member.model.mapper.MemberMapper">
+<mapper namespace="edu.kh.project.member.model.mapper.MemberMapper">
 
+    <insert id="insertBlockContact" parameterType="BlockContact">
+        INSERT INTO BLOCK_CONTACT (BLOCK_ID, MEMBER_NO, TARGET_NAME, TARGET_PHONE, TARGET_EMAIL) 
+        VALUES (SEQ_BLOCK_CONTACT_NO.NEXTVAL, #{memberNo}, #{targetName}, #{targetPhone}, #{targetEmail})
+    </insert>
 
-	<update id="updateMemberProfile"
-		parameterType="MemberProfileRequest">
-		MERGE INTO MEMBER_PROFILE T
-		USING DUAL ON (T.MEMBER_NO = #{memberNo})
-		WHEN MATCHED THEN
-		UPDATE SET
-		INTRO = #{intro},
-		HEIGHT = #{height},
-		MBTI = #{mbti},
-		RESIDENCE = #{region}
-		WHEN NOT MATCHED THEN
-		INSERT (MEMBER_NO, INTRO, HEIGHT, MBTI, RESIDENCE, BIRTH_DATE, GENDER)
-		VALUES (#{memberNo}, #{intro}, #{height}, #{mbti}, #{region}, SYSDATE,
-		'M')
-	</update>
+    <select id="selectBlockList" parameterType="_int" resultType="BlockContact">
+        SELECT * FROM BLOCK_CONTACT WHERE MEMBER_NO = #{memberNo} ORDER BY BLOCK_ID DESC
+    </select>
 
-	<update id="updateMemberCommon"
-		parameterType="MemberProfileRequest">
-		UPDATE MEMBER SET
-		REL_INTENT_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
-		#{relationship}),
-		AFFECT_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{affection}),
-		EDU_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
-		#{education}), -- 학력 유지
-		COMM_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{contact}),
-		ZODIAC_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
-		#{zodiac}),
-		EXERCISE_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{exercise}),
-		DRINK_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
-		#{drinking}),
-		SMOKE_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{smoking}),
-		SNS_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
-		#{social})
-		WHERE MEMBER_NO = #{memberNo}
-	</update>
-
-	<delete id="deleteInterests" parameterType="_int">
-		DELETE FROM MEMBER_INTERESTS WHERE MEMBER_NO = #{memberNo}
-	</delete>
-
-	<insert id="insertInterest" parameterType="map">
-		INSERT INTO MEMBER_INTERESTS (MEMBER_NO, INTEREST_ID)
-		VALUES (
-		#{memberNo},
-		(SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{interest})
-		)
-	</insert>
-
-
-</mapper>
+    <delete id="deleteBlockContact" parameterType="BlockContact">
+        DELETE FROM BLOCK_CONTACT WHERE BLOCK_ID = #{blockId} AND MEMBER_NO = #{memberNo}
+    </delete>
+    </mapper>

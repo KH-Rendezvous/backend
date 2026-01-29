@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class Member {
     // MEMBER 테이블 컬럼 1:1 매칭
     private int memberNo;
+    private String name;
     private String email;
     private String password;
     private String nickname;
@@ -40,8 +41,8 @@ public class Member {
     private Integer snsId;
 
     // 이후 추가
-    private int searchDistance;
+    private Integer searchDistance;
     private int targetMinAge; // 최소 나이
-    private int targetMaxAge; // 최대 나이
+    private Integer targetMaxAge; // 최대 나이
     private String profileOpen;	// 프로필 공개 여부
 }
