@@ -5,7 +5,8 @@ import java.util.List;
 
 @Data
 public class MemberProfileRequest {
-    private int memberNo;           // 세션에서 꺼내서 넣을 거임
+    private int memberNo;
+    private String nickname;
 
     // 1. MEMBER_PROFILE 테이블 데이터
     private String intro;
@@ -24,6 +25,11 @@ public class MemberProfileRequest {
     private String drinking;
     private String smoking;
     private String social;
+    private int schNo;
+    private String schoolName;
+    private int regionId;
+    private String regionName;
+    private String gender;
 
     // 3. 관심사 (배열)
     private List<String> interestList; 

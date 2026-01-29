@@ -3,7 +3,6 @@ package edu.kh.project.member.model.service;
 import java.util.List;
 
 import edu.kh.project.member.model.dto.BlockContact;
-import edu.kh.project.member.model.dto.MemberProfileRequest;
 
 public interface MemberService {
 	
@@ -16,6 +15,6 @@ public interface MemberService {
 	// 차단 해제
 	int deleteBlock(int blockId, int memberNo);
 
-	int updateProfile(MemberProfileRequest req);
+	
 
 }
