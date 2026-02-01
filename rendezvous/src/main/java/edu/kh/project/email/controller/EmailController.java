@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,13 +32,6 @@ public class EmailController {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 	}
 
-// qna, 고객지원 통합할지 말지에 대한 고민 ...
-	/**
-	 * QnA 답변
-	 * 
-	 * @param params
-	 * @return
-	 */
 	@PostMapping("qna")
 	public ResponseEntity<Integer> sendQnaAnswer(@RequestBody Map<String, String> params) {
 		int result = service.sendQnaEmail("inquiry-reply", params);
@@ -48,17 +40,12 @@ public class EmailController {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 	}
 
-	/**
-	 * 고객지원 답변
-	 * 
-	 * @param params
-	 * @return
-	 */
-	@PostMapping("answer")
-	public ResponseEntity<Integer> sendAnswer(@RequestBody Map<String, String> params) {
-		int result = service.sendApproveEmail("inquiry-reply", params.get("email"));
+	@PostMapping("support")
+	public ResponseEntity<Integer> sendSupportAnswer(@RequestBody Map<String, String> params) {
+		int result = service.sendSupplyEmail("inquiry-reply", params);
 		if (result > 0)
 			return ResponseEntity.status(HttpStatus.OK).body(result);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 	}
+
 }

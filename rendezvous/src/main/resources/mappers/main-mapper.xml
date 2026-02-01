@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edu.kh.project.main.model.mapper.MainMapper">
+
+	<insert id="addSupport">
+		INSERT INTO "SUPPORT" (
+		SUPPORT_NO,
+		SUPPORT_TITLE,
+		EMAIL,
+		SUPPORT_CONTENT,
+		SUPPORT_DATE,
+		SUPPORT_STATUS
+		) VALUES (
+		SEQ_SUPPORT_NO.NEXTVAL,
+		#{title},
+		#{email},
+		#{content},
+		DEFAULT,
+		DEFAULT
+		)
+	</insert>
+	<select id="getSupport" resultType="Support">
+		SELECT
+		SUPPORT_NO "supportNo",
+		SUPPORT_TITLE "supportTitle",
+		EMAIL "email",
+		SUPPORT_CONTENT "supportContent",
+		TO_CHAR(SUPPORT_DATE, 'YYYY-MM-DD') "supportDate",
+		SUPPORT_STATUS "supportStatus",
+		ANSWER_CONTENT "answerContent" FROM SUPPORT
+		ORDER BY SUPPORT_NO DESC
+	</select>
+</mapper>
