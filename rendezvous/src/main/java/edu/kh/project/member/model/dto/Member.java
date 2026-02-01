@@ -45,4 +45,7 @@ public class Member {
     private int targetMinAge; // 최소 나이
     private Integer targetMaxAge; // 최대 나이
     private String profileOpen;	// 프로필 공개 여부
+    
+    // 승인 여부 -> 재훈 수정
+    private String memberStatus;
 }

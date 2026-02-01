@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="edu.kh.project.email.model.mapper.EmailMapper">
+
+	<update id="updateSupportStatus">
+		UPDATE "SUPPORT"
+		SET "SUPPORT_STATUS" = 'Y',
+		"ANSWER_CONTENT" = #{content} WHERE "SUPPORT_NO" = #{supportNo}
+	</update>
+	<update id="updateQnaStatus">
+		UPDATE "QNA"
+		SET QNA_STATUS = 'Y',
+		ANSWER_CONTENT = #{content}
+		WHERE QNA_NO = #{qnaNo}
+	</update>
 </mapper>
