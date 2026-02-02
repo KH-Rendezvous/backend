@@ -24,10 +24,10 @@ public class MyPageServiceImpl implements MyPageService {
 	private MyPageMapper mapper;
 
 	// config.properties에서 값 가져오기
-	@Value("${project.resource.location}") // C:/upload/project/
+	@Value("${project.resource.location}")
 	private String folderPath;
 
-	@Value("${project.resource.webpath}") // /images/
+	@Value("${project.resource.webpath}") 
 	private String webPath;
 
 	// 거리 수정
@@ -54,50 +54,60 @@ public class MyPageServiceImpl implements MyPageService {
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public int updateProfile(MemberProfileRequest req, List<MultipartFile> images, List<Integer> orders,
+	public int updateProfile(MemberProfileRequest profileRequest, List<MultipartFile> images, List<Integer> orders,
 			List<Integer> deleteList) throws Exception {
 
-		// 1. 텍스트 정보 수정 (기존 로직 유지)
-		int result = mapper.updateMemberProfile(req);
-		// 공통 정보 수정은 필요에 따라 활성화 (쿼리가 나뉘어 있다면)
-		// result += mapper.updateMemberCommon(req);
+		// 1. 프로필 정보(MEMBER_PROFILE) 수정 (자기소개, MBTI, 키 등)
+		int result = mapper.updateMemberProfile(profileRequest);
 
-		// 2. 관심사 수정 (삭제 후 재삽입)
-		if (req.getInterestList() != null) {
-			mapper.deleteInterests(req.getMemberNo()); // 기존 관심사 삭제
-			if (!req.getInterestList().isEmpty()) {
-				// 리스트 통째로 넘겨서 마이바티스 <foreach>로 한 번에 삽입 (권장)
-				mapper.insertInterests(req.getMemberNo(), req.getInterestList());
+		// 2. 닉네임 및 생활/연애 정보(MEMBER) 수정
+		if (profileRequest.getNickname() != null) {
+			result += mapper.updateMemberCommon(profileRequest);
+		}
+
+		// 3. 관심사 수정
+		// 관심사 리스트가 null이 아닐 때만 수행 (빈 리스트라도 수행해서 기존 거 지워야 함)
+		if (profileRequest.getInterestList() != null) {
+			// 기존 관심사 삭제
+			mapper.deleteInterests(profileRequest.getMemberNo());
+
+			// 선택한 관심사가 있으면 삽입
+			if (!profileRequest.getInterestList().isEmpty()) {
+				mapper.insertInterests(profileRequest.getMemberNo(), profileRequest.getInterestList());
 			}
 		}
 
-		// 3. 이미지 삭제 처리 (deleteList에 담긴 ID들 제거)
+		// 4. 이미지 삭제 처리
 		if (deleteList != null && !deleteList.isEmpty()) {
 			mapper.deleteProfileImages(deleteList);
-			// (서버 폴더 내 실제 파일 삭제 로직은 선택 사항)
 		}
 
-		// 4. 새 이미지 업로드 및 정보 저장 (MERGE)
+		// 5. 이미지 업로드 및 수정 처리
 		if (images != null && !images.isEmpty()) {
 			for (int i = 0; i < images.size(); i++) {
 				MultipartFile file = images.get(i);
-				int order = orders.get(i); // 해당 파일의 순서(1~6)
+				int order = orders.get(i); // 프론트에서 보낸 순서(1~6)
 
+				// 파일이 비어있지 않으면(용량이 있으면) 업로드 진행
 				if (file.getSize() > 0) {
-					// 4-1. 파일명 변경 및 저장
-					String rename = FileUtil.rename(file.getOriginalFilename());
-					file.transferTo(new File(folderPath + rename));
+					// 파일명 변경
+					String originalName = file.getOriginalFilename();
+					String rename = FileUtil.rename(originalName);
 
-					// 4-2. DTO 생성
+					// DTO 생성
 					MemberPhoto photo = new MemberPhoto();
-					photo.setMemberNo(req.getMemberNo());
+					photo.setMemberNo(profileRequest.getMemberNo());
 					photo.setPhotoOrder(order);
-					photo.setOriginName(file.getOriginalFilename());
+					photo.setOriginName(originalName);
 					photo.setRenameName(rename);
 					photo.setPhotoUrl(webPath);
 
-					// 4-3. DB 저장 (있으면 수정, 없으면 삽입)
 					mapper.insertOrUpdateProfileImage(photo);
+
+					// 서버 파일 저장
+					file.transferTo(new File(folderPath + rename));
+
+					result++; // 성공 카운트 증가
 				}
 			}
 		}
@@ -119,8 +129,7 @@ public class MyPageServiceImpl implements MyPageService {
 		List<String> interests = mapper.selectMemberInterests(memberNo);
 		profile.setInterestList(interests);
 
-		// ★ [수정] 3. 프로필 이미지 목록 가져와서 합치기 (이 부분이 누락됨)
-		// DTO에 List<MemberPhoto> profileList 필드가 있어야 함
+		// 3. 프로필 이미지 목록 가져와서 합치기
 		List<MemberPhoto> photos = mapper.selectMemberPhotos(memberNo);
 		profile.setProfileList(photos);
 
@@ -148,11 +157,9 @@ public class MyPageServiceImpl implements MyPageService {
 	}
 
 	@Override
-	@Transactional(rollbackFor = Exception.class) // 트랜잭션 처리 필수
+	@Transactional(rollbackFor = Exception.class)
 	public int withdraw(int memberNo) {
 		return mapper.withdraw(memberNo);
 	}
-
-
 
 }
