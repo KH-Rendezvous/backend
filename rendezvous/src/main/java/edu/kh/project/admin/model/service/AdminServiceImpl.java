@@ -6,10 +6,12 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import edu.kh.project.admin.model.dto.Qna;
 import edu.kh.project.admin.model.dto.Report;
 import edu.kh.project.admin.model.mapper.AdminMapper;
 import edu.kh.project.email.model.service.EmailService;
 import edu.kh.project.member.model.dto.Member;
+import edu.kh.project.member.model.dto.MemberProfileRequest;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -21,7 +23,7 @@ public class AdminServiceImpl implements AdminService {
 	private final EmailService emailService;
 
 	@Override
-	public List<Member> selectMemberList() {
+	public List<MemberProfileRequest> selectMemberList() {
 		return mapper.selectMemberList();
 	}
 
@@ -45,13 +47,26 @@ public class AdminServiceImpl implements AdminService {
 
 	@Override
 	public List<Report> selectReportList() {
-//		mapper.selectReportList()
-		return null;
+		return mapper.selectReportList();
 	}
 
 	@Override
 	public int processReport(Map<String, Object> params) {
-//		mapper.processReport(params)
-		return 0;
+		// 1. 신고 테이블의 상태를 'Y'로 변경 (처리 완료)
+		int reportResult = mapper.updateReportStatus(params);
+		
+		// 2. 신고 대상 회원의 탈퇴 여부(DEL_FL)를 'Y'로 변경 (정지)
+		int memberResult = mapper.banMember(params);
+		
+		// 둘 다 성공했을 때만 1 반환, 아니면 0 반환 (혹은 예외 발생시켜 롤백 유도 가능)
+		if(reportResult > 0 && memberResult > 0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	public List<Qna> getAdminQnaList() {
+		return mapper.selectAdminQnaList();
 	}
 }

@@ -12,9 +12,9 @@ public class Report {
 	private int memberNo;
 	private int targetMemberNo;
 	private int reason;
-	private String adminComment; // 관리자 처리 내용
 
 	// JOIN으로 가져올 닉네임들
 	private String reporterNickname; // 신고자 닉네임
 	private String targetNickname; // 대상자 닉네임
+	private String codeName;
 }

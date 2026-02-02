@@ -1,8 +1,9 @@
-package edu.kh.project.qna.model.dto;
+package edu.kh.project.admin.model.dto;
 
 import lombok.Data;
 
 @Data
+
 public class Qna {
 	private int qnaNo;
 	private String qnaTitle;
