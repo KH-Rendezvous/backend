@@ -1,5 +1,7 @@
 package edu.kh.project.admin.model.dto;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -17,4 +19,5 @@ public class Report {
 	private String reporterNickname; // 신고자 닉네임
 	private String targetNickname; // 대상자 닉네임
 	private String codeName;
+	private List<String> imageList;
 }

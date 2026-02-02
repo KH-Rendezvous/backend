@@ -5,14 +5,11 @@
 	<resultMap id="memberProfileMap"
 		type="edu.kh.project.member.model.dto.MemberProfileRequest"
 		autoMapping="true">
-
 		<id property="memberNo" column="MEMBER_NO" />
-
 		<collection property="interestList"
 			ofType="java.lang.String">
 			<result column="INTEREST_NAME" />
 		</collection>
-
 		<collection property="profileList"
 			ofType="edu.kh.project.member.model.dto.MemberPhoto"
 			autoMapping="true">
@@ -24,6 +21,14 @@
 		</collection>
 	</resultMap>
 
+	<resultMap id="reportListMap"
+		type="edu.kh.project.admin.model.dto.Report" autoMapping="true">
+		<id property="reportNo" column="REPORT_NO" />
+		<collection property="imageList" ofType="java.lang.String">
+			<result column="IMAGE_PATH" />
+		</collection>
+	</resultMap>
+
 
 	<select id="selectMemberList" resultMap="memberProfileMap">
 		SELECT
@@ -31,8 +36,7 @@
 		M.EMAIL,
 		M.NICKNAME,
 		M.PHONE AS "phone",
-		M.MEMBER_STATUS AS
-		"memberStatus",
+		M.MEMBER_STATUS AS "memberStatus",
 		TO_CHAR(M.CREATE_DATE, 'YYYY-MM-DD') AS "createDate",
 		P.INTRO,
 		P.GENDER,
@@ -41,23 +45,19 @@
 		P.BIRTH_DATE AS "birthDate",
 		S.SCH_NAME AS "schoolName",
 		R.FULL_ADDR AS "regionName",
-		C.CODE_NAME AS
-		"relationship",
+		C.CODE_NAME AS "relationship",
 		C2.CODE_NAME AS "affection",
 		C3.CODE_NAME AS "contact",
 		C4.CODE_NAME AS "zodiac",
 		C5.CODE_NAME AS "exercise",
-		C6.CODE_NAME AS
-		"drinking",
+		C6.CODE_NAME AS "drinking",
 		C7.CODE_NAME AS "smoking",
 		C8.CODE_NAME AS "social",
 		MC.CODE_NAME AS "INTEREST_NAME",
 		(SELECT PHOTO_URL || RENAME_NAME
-		FROM
-		MEMBER_PHOTOS
+		FROM MEMBER_PHOTOS
 		WHERE MEMBER_NO = M.MEMBER_NO
-		AND PHOTO_ORDER = 0) AS
-		"profileImage",
+		AND PHOTO_ORDER = 0) AS "profileImage",
 		MP.PHOTO_ID,
 		MP.PHOTO_URL,
 		MP.RENAME_NAME,
@@ -65,42 +65,31 @@
 		MP.PHOTO_ORDER
 
 		FROM "MEMBER" M
-		LEFT JOIN "MEMBER_PROFILE"
-		P ON M.MEMBER_NO =
+		LEFT JOIN "MEMBER_PROFILE" P ON M.MEMBER_NO =
 		P.MEMBER_NO
-		LEFT JOIN "MASTER_REGIONS" R ON
-		P.REGION_ID = R.REGION_ID
+		LEFT JOIN "MASTER_REGIONS" R ON P.REGION_ID = R.REGION_ID
 		LEFT JOIN "SCHOOL" S ON P.SCH_NO = S.SCH_NO
 		LEFT JOIN MEMBER_INTERESTS
 		MI ON M.MEMBER_NO = MI.MEMBER_NO
-		LEFT JOIN
-		"MASTER_CODES" MC ON
+		LEFT JOIN "MASTER_CODES" MC ON
 		MI.INTEREST_ID = MC.CODE_ID
-		LEFT JOIN MEMBER_PHOTOS
-		MP ON M.MEMBER_NO =
+		LEFT JOIN MEMBER_PHOTOS MP ON M.MEMBER_NO =
 		MP.MEMBER_NO
-		LEFT JOIN "MASTER_CODES" C ON
-		M.REL_INTENT_ID = C.CODE_ID
-		LEFT JOIN "MASTER_CODES" C2 ON M.AFFECT_ID
-		= C2.CODE_ID
+		LEFT JOIN "MASTER_CODES" C ON M.REL_INTENT_ID = C.CODE_ID
+		LEFT JOIN "MASTER_CODES" C2 ON M.AFFECT_ID = C2.CODE_ID
 		LEFT JOIN
 		"MASTER_CODES" C3 ON M.COMM_ID = C3.CODE_ID
-		LEFT
-		JOIN "MASTER_CODES" C4
+		LEFT JOIN "MASTER_CODES" C4
 		ON M.ZODIAC_ID = C4.CODE_ID
-		LEFT JOIN
-		"MASTER_CODES" C5 ON
+		LEFT JOIN "MASTER_CODES" C5 ON
 		M.EXERCISE_ID = C5.CODE_ID
-		LEFT JOIN "MASTER_CODES"
-		C6 ON M.DRINK_ID =
+		LEFT JOIN "MASTER_CODES" C6 ON M.DRINK_ID =
 		C6.CODE_ID
-		LEFT JOIN "MASTER_CODES" C7 ON M.SMOKE_ID
-		= C7.CODE_ID
+		LEFT JOIN "MASTER_CODES" C7 ON M.SMOKE_ID = C7.CODE_ID
 		LEFT
 		JOIN "MASTER_CODES" C8 ON M.SNS_ID = C8.CODE_ID
 
-		ORDER
-		BY M.MEMBER_NO
+		ORDER BY M.MEMBER_NO
 		DESC, MP.PHOTO_ORDER ASC
 	</select>
 
@@ -112,8 +101,7 @@
 	</update>
 
 
-	<select id="selectReportList"
-		resultType="edu.kh.project.admin.model.dto.Report">
+	<select id="selectReportList" resultMap="reportListMap">
 		SELECT
 		R.REPORT_NO,
 		R.REPORT_TITLE,
@@ -122,23 +110,24 @@
 		R.REPORT_STATUS,
 		R.MEMBER_NO,
 		R.TARGET_MEMBER_NO AS "targetMemberNo",
-
-		M1.NICKNAME AS
-		"reporterNickname",
+		M1.NICKNAME AS "reporterNickname",
 		M2.NICKNAME AS "targetNickname",
+		C.CODE_NAME AS "codeName",
 
-		C.CODE_NAME AS
-		"codeName"
+		-- 이미지 경로 + 파일명 합쳐서 가져오기 --
+		(I.IMG_PATH || I.IMG_RENAME) AS "IMAGE_PATH"
 
 		FROM "REPORT" R
-		JOIN "MEMBER" M1 ON (R.MEMBER_NO =
-		M1.MEMBER_NO)
-		JOIN "MEMBER" M2 ON (R.TARGET_MEMBER_NO = M2.MEMBER_NO)
-		LEFT JOIN
-		"MASTER_CODES" C ON (R.REPORT_NO = C.CODE_ID)
+		JOIN "MEMBER" M1 ON
+		(R.MEMBER_NO = M1.MEMBER_NO)
+		JOIN "MEMBER" M2 ON (R.TARGET_MEMBER_NO =
+		M2.MEMBER_NO)
+		LEFT JOIN "MASTER_CODES" C ON (R.REASON = C.CODE_ID)
 
-		ORDER BY
-		R.REPORT_NO DESC
+		LEFT JOIN "IMAGE" I ON (R.REPORT_NO =
+		I.REPORT_NO)
+
+		ORDER BY R.REPORT_NO DESC, I.IMG_ORDER ASC
 	</select>
 
 
@@ -149,13 +138,13 @@
 		= #{reportNo}
 	</update>
 
+
 	<select id="selectAdminQnaList" resultType="Qna">
 		SELECT
 		Q.QNA_NO,
 		Q.QNA_TITLE,
 		Q.QNA_CONTENT,
-		TO_CHAR(Q.QNA_DATE, 'YYYY-MM-DD') AS
-		QNA_DATE,
+		TO_CHAR(Q.QNA_DATE, 'YYYY-MM-DD') AS QNA_DATE,
 		Q.MEMBER_NO,
 		Q.QNA_STATUS,
 		Q.ANSWER_CONTENT,
@@ -166,6 +155,5 @@
 		ORDER BY
 		Q.QNA_NO DESC
 	</select>
-
 
 </mapper>
