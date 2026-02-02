@@ -1,6 +1,7 @@
 package edu.kh.project.member.model.dto;
 
 import java.sql.Date;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -45,6 +46,7 @@ public class Member {
     private int targetMinAge; // 최소 나이
     private Integer targetMaxAge; // 최대 나이
     private String profileOpen;	// 프로필 공개 여부
+    private List<MemberPhoto> profileList;	// 프로필 사진 목록
     
     // 승인 여부 -> 재훈 수정
     private String memberStatus;
