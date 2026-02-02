@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.kh.project.matching.model.mapper.MatchingMapper">
+
+    <select id="selectDiscoveryList" resultType="edu.kh.project.matching.model.dto.MatchingUserDTO">
+        SELECT 
+            M.MEMBER_NO, 
+            M.NICKNAME, 
+            P.INTRO, 
+            P.RESIDENCE, 
+            P.MBTI,
+            P.GENDER,
+            FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) AS AGE,
+            MP.PHOTO_URL,
+            '10' AS DISTANCE 
+        FROM "MEMBER" M
+        JOIN "MEMBER_PROFILE" P ON (M.MEMBER_NO = P.MEMBER_NO)
+        JOIN "MEMBER_PHOTOS" MP ON (M.MEMBER_NO = MP.MEMBER_NO)
+        WHERE M.DEL_FL = 'N'
+          AND M.MEMBER_NO != #{memberNo}
+          AND P.GENDER = (SELECT TARGET_GENDER FROM "MEMBER" WHERE MEMBER_NO = #{memberNo})
+          AND MP.PHOTO_ORDER = 1
+    </select>
+
+</mapper>
