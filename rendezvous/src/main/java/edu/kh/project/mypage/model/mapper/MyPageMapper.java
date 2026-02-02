@@ -17,8 +17,6 @@ public interface MyPageMapper {
     // 1. 회원 정보 수정
     int updateMemberProfile(MemberProfileRequest req);
     
-    // (참고) XML에 updateMemberCommon 쿼리가 없다면 이 메서드는 호출 시 에러가 날 수 있습니다.
-    // 현재 서비스 코드에서는 주석 처리되어 있으니 괜찮습니다.
     int updateMemberCommon(MemberProfileRequest req);  
 
     // 2. 관심사 관리
