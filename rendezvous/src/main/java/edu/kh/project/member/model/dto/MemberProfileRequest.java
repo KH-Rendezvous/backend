@@ -10,7 +10,7 @@ public class MemberProfileRequest {
 
     // 1. MEMBER_PROFILE 테이블 데이터
     private String intro;
-    private int height;
+    private Integer height;
     private String mbti;
     private String region;
     private String school; 
@@ -25,12 +25,13 @@ public class MemberProfileRequest {
     private String drinking;
     private String smoking;
     private String social;
-    private int schNo;
+    private Integer schNo;
     private String schoolName;
-    private int regionId;
+    private Integer regionId;
     private String regionName;
     private String gender;
 
     // 3. 관심사 (배열)
-    private List<String> interestList; 
+    private List<String> interestList;
+    private List<MemberPhoto> profileList;
 }

@@ -3,6 +3,8 @@ package edu.kh.project.mypage.model.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import edu.kh.project.member.model.dto.MasterCode;
 import edu.kh.project.member.model.dto.Member;
 import edu.kh.project.member.model.dto.MemberProfileRequest;
@@ -21,8 +23,6 @@ public interface MyPageService {
 	
 	int updateVisibility(Member member);
 	
-	int updateProfile(MemberProfileRequest req);
-	
 	MemberProfileRequest getProfile(int memberNo);
 	
 	List<Map<String, Object>> searchSchool(String keyword);
@@ -32,5 +32,9 @@ public interface MyPageService {
 	List<MasterCode> getAllMasterCodes();
 
 	int checkNickname(String nickname);
+
+	int withdraw(int memberNo);
+
+	int updateProfile(MemberProfileRequest req, List<MultipartFile> images, List<Integer> orders, List<Integer> deleteList) throws Exception;
 
 }
