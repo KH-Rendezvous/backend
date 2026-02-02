@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="edu.kh.project.mypage.model.mapper.MyPageMapper">
+
+	<update id="updateDistance" parameterType="Member">
+		UPDATE "MEMBER"
+		SET
+		SEARCH_DISTANCE = #{searchDistance, jdbcType=NUMERIC}
+		WHERE MEMBER_NO =
+		#{memberNo}
+	</update>
+
+	<update id="updateGender" parameterType="Member">
+		UPDATE "MEMBER"
+		SET
+		TARGET_GENDER = #{targetGender}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<update id="updateAgeRange" parameterType="Member">
+		UPDATE "MEMBER"
+		SET
+		TARGET_MIN_AGE = #{targetMinAge},
+		TARGET_MAX_AGE = #{targetMaxAge,
+		jdbcType=NUMERIC}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<update id="updateVisibility" parameterType="Member">
+		UPDATE "MEMBER"
+		SET
+		PROFILE_OPEN = #{profileOpen}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<update id="updateMemberProfile"
+		parameterType="MemberProfileRequest">
+		MERGE INTO MEMBER_PROFILE T
+		USING DUAL ON (T.MEMBER_NO = #{memberNo})
+		WHEN MATCHED THEN
+		UPDATE SET
+		INTRO = #{intro},
+		HEIGHT = #{height},
+		MBTI = #{mbti},
+		REGION_ID = #{regionId},
+		SCH_NO = #{schNo}
+		WHEN NOT MATCHED THEN
+		INSERT (MEMBER_NO, INTRO, HEIGHT, MBTI, REGION_ID, BIRTH_DATE, GENDER,
+		SCH_NO)
+		VALUES (#{memberNo}, #{intro}, #{height}, #{mbti}, #{regionId}, SYSDATE,
+		'M', #{schNo})
+	</update>
+
+	<update id="updateMemberCommon"
+		parameterType="MemberProfileRequest">
+		UPDATE "MEMBER" SET
+		NICKNAME = #{nickname},
+		REL_INTENT_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
+		#{relationship}),
+		AFFECT_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{affection}),
+		EDU_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
+		#{education}),
+		COMM_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{contact}),
+		ZODIAC_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
+		#{zodiac}),
+		EXERCISE_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{exercise}),
+		DRINK_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
+		#{drinking}),
+		SMOKE_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME = #{smoking}),
+		SNS_ID = (SELECT CODE_ID FROM MASTER_CODES WHERE CODE_NAME =
+		#{social})
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+
+	<delete id="deleteInterests" parameterType="_int">
+		DELETE FROM MEMBER_INTERESTS WHERE MEMBER_NO = #{memberNo}
+	</delete>
+
+	<insert id="insertInterests">
+		INSERT INTO MEMBER_INTERESTS (MEMBER_NO, INTEREST_ID)
+		SELECT #{memberNo}, CODE_ID
+		FROM MASTER_CODES
+		WHERE CODE_NAME IN
+		<foreach collection="list" item="interest" open="("
+			separator="," close=")">
+			#{interest}
+		</foreach>
+	</insert>
+
+
+	<select id="selectMemberPhotos" parameterType="_int"
+		resultType="MemberPhoto">
+		SELECT
+		PHOTO_ID,
+		MEMBER_NO,
+		PHOTO_ORDER,
+		ORIGIN_NAME,
+		RENAME_NAME,
+		PHOTO_URL
+		FROM MEMBER_PHOTOS
+		WHERE MEMBER_NO = #{memberNo}
+		ORDER BY PHOTO_ORDER ASC
+	</select>
+
+	<delete id="deleteProfileImages" parameterType="list">
+		DELETE FROM MEMBER_PHOTOS
+		WHERE PHOTO_ID IN
+		<foreach collection="list" item="id" open="(" separator=","
+			close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<update id="insertOrUpdateProfileImage"
+		parameterType="MemberPhoto">
+		MERGE INTO MEMBER_PHOTOS T
+		USING DUAL
+		ON (T.MEMBER_NO = #{memberNo} AND T.PHOTO_ORDER = #{photoOrder})
+		WHEN MATCHED THEN
+		UPDATE SET
+		ORIGIN_NAME = #{originName},
+		RENAME_NAME = #{renameName},
+		PHOTO_URL = #{photoUrl}
+		WHEN NOT MATCHED THEN
+		INSERT (PHOTO_ID, MEMBER_NO, PHOTO_ORDER, ORIGIN_NAME, RENAME_NAME,
+		PHOTO_URL)
+		VALUES (SEQ_PHOTO_ID.NEXTVAL, #{memberNo}, #{photoOrder}, #{originName},
+		#{renameName}, #{photoUrl})
+	</update>
+
+
+	<select id="selectMemberProfile" parameterType="_int"
+		resultType="MemberProfileRequest">
+		SELECT
+		M.MEMBER_NO,
+		M.NICKNAME,
+		S.SCH_NAME AS SCHOOL_NAME,
+		P.SCH_NO,
+		P.INTRO,
+		P.MBTI,
+		P.GENDER,
+		TO_CHAR(P.HEIGHT) AS HEIGHT,
+		R.FULL_ADDR AS REGION_NAME,
+		P.REGION_ID,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.REL_INTENT_ID) AS
+		RELATIONSHIP,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.AFFECT_ID) AS
+		AFFECTION,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.EDU_ID) AS EDUCATION,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.COMM_ID) AS
+		CONTACT,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.ZODIAC_ID) AS ZODIAC,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.EXERCISE_ID) AS
+		EXERCISE,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.DRINK_ID) AS DRINKING,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.SMOKE_ID) AS
+		SMOKING,
+		(SELECT CODE_NAME FROM MASTER_CODES WHERE CODE_ID = M.SNS_ID) AS SOCIAL
+
+		FROM "MEMBER" M
+		LEFT JOIN MEMBER_PROFILE P ON M.MEMBER_NO = P.MEMBER_NO
+		LEFT JOIN SCHOOL S ON P.SCH_NO = S.SCH_NO
+		LEFT JOIN MASTER_REGIONS R ON P.REGION_ID = R.REGION_ID
+		WHERE M.MEMBER_NO = #{memberNo}
+	</select>
+
+	<select id="selectMemberInterests" parameterType="_int"
+		resultType="string">
+		SELECT C.CODE_NAME
+		FROM MEMBER_INTERESTS I
+		JOIN MASTER_CODES C ON I.INTEREST_ID = C.CODE_ID
+		WHERE I.MEMBER_NO = #{memberNo}
+	</select>
+
+	<select id="searchSchool" resultType="map">
+		SELECT SCH_NO, SCH_NAME, SCH_REGION
+		FROM SCHOOL
+		WHERE SCH_NAME LIKE '%' || #{keyword} || '%'
+		ORDER BY SCH_NAME ASC
+	</select>
+
+	<select id="searchRegion" resultType="map">
+		SELECT REGION_ID, FULL_ADDR
+		FROM MASTER_REGIONS
+		WHERE FULL_ADDR LIKE '%' || #{keyword} || '%'
+		ORDER BY REGION_ID ASC
+	</select>
+
+	<select id="selectAllMasterCodes" resultType="MasterCode">
+		SELECT
+		CODE_ID,
+		CATEGORY,
+		CODE_NAME,
+		EMOJI,
+		SORT_ORDER
+		FROM MASTER_CODES
+		ORDER BY CATEGORY,
+		SORT_ORDER
+	</select>
+
+	<select id="checkNickname" resultType="_int">
+		SELECT COUNT(*)
+		FROM
+		"MEMBER"
+		WHERE NICKNAME = #{nickname}
+		AND DEL_FL = 'N'
+	</select>
+
+	<update id="withdraw" parameterType="_int">
+		UPDATE "MEMBER"
+		SET
+		DEL_FL = 'Y'
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+</mapper>

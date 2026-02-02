@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="edu.kh.project.info.model.mapper.InfoBoardMapper">
+
+	<select id="selectAllAddresses" resultType="string">
+		SELECT ADDRESS FROM INFO_BOARD
+		WHERE ADDRESS IS NOT NULL
+	</select>
+
+	<select id="selectPlaceList" parameterType="map"
+		resultType="edu.kh.project.info.model.dto.InfoBoard">
+		SELECT * FROM INFO_BOARD
+		WHERE 1=1
+
+		<if test="type != null and type != 'ALL'">
+			AND LOCATION_TYPE = #{type}
+		</if>
+		<if test="city != null and city != ''">
+			AND ADDRESS LIKE #{city} || '%'
+		</if>
+		<if test="district != null and district != ''">
+			AND ADDRESS LIKE '%' || #{district} || '%'
+		</if>
+		<if test="tag != null and tag != ''">
+			AND AI_TAGS LIKE '%' || #{tag} || '%'
+		</if>
+
+		ORDER BY INFO_NO DESC
+	</select>
+
+	<select id="selectById"
+		resultType="edu.kh.project.info.model.dto.InfoBoard">
+		SELECT * FROM INFO_BOARD WHERE INFO_NO = #{infoNo}
+	</select>
+
+	<insert id="insertInfoBoard">
+		INSERT INTO INFO_BOARD (
+		INFO_NO, CONTENT_ID, INFO_NAME, ADDRESS, TEL,
+		IMG_URL, THUMB_URL, HOMEPAGE, LAT, LNG,
+		OPEN_TIME, REST_DAY, PARKING, MENU,
+		INFO_BODY, AI_TAGS, AI_NOTE, LOCATION_TYPE, CREATE_DATE
+		) VALUES (
+		SEQ_INFO_BOARD_NO.NEXTVAL, #{contentId}, #{infoName}, #{address}, #{tel},
+		#{imgUrl}, #{thumbUrl}, #{homepage}, #{lat}, #{lng},
+		#{openTime}, #{restDay}, #{parking}, #{menu},
+		#{infoBody}, #{aiTags}, #{aiNote}, #{locationType}, SYSDATE
+		)
+	</insert>
+
+	<delete id="deleteByContentId">
+		DELETE FROM INFO_BOARD WHERE CONTENT_ID = #{contentId}
+	</delete>
+
+</mapper>

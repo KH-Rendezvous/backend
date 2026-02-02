@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edu.kh.project.member.model.mapper.MemberMapper">
+
+    <insert id="insertBlockContact" parameterType="BlockContact">
+        INSERT INTO BLOCK_CONTACT (BLOCK_ID, MEMBER_NO, TARGET_NAME, TARGET_PHONE, TARGET_EMAIL) 
+        VALUES (SEQ_BLOCK_CONTACT_NO.NEXTVAL, #{memberNo}, #{targetName}, #{targetPhone}, #{targetEmail})
+    </insert>
+
+    <select id="selectBlockList" parameterType="_int" resultType="BlockContact">
+        SELECT * FROM BLOCK_CONTACT WHERE MEMBER_NO = #{memberNo} ORDER BY BLOCK_ID DESC
+    </select>
+
+    <delete id="deleteBlockContact" parameterType="BlockContact">
+        DELETE FROM BLOCK_CONTACT WHERE BLOCK_ID = #{blockId} AND MEMBER_NO = #{memberNo}
+    </delete>
+    </mapper>
