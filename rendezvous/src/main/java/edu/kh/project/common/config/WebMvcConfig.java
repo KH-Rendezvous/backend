@@ -7,15 +7,15 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@PropertySource("classpath:config.properties") // 아까 만든 설정 파일 읽기
+@PropertySource("classpath:config.properties")
 public class WebMvcConfig implements WebMvcConfigurer {
 
     // 설정 파일에서 값 가져오기
     @Value("${project.resource.webpath}")
-    private String webPath; // "/images/"
+    private String webPath; 
     
     @Value("${project.resource.location}")
-    private String resourceLocation; // "file:///C:/upload/project/"
+    private String resourceLocation;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

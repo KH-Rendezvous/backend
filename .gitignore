@@ -11,4 +11,5 @@ Thumbs.db
 .project
 .settings/
 .classpath
-rendezvous/src/main/resources/firebase-service-key.json
+.sonarlint
+

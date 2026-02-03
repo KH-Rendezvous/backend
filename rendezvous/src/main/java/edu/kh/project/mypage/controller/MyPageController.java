@@ -37,7 +37,7 @@ public class MyPageController {
             @RequestParam(value = "orders", required = false) List<Integer> orders,
             @RequestParam(value = "deleteList", required = false) List<Integer> deleteList,
             
-            // 👇 [중요] required = false 추가 (없어도 에러 안 나게)
+            // required = false 추가 (없어도 에러 안 나게)
             @SessionAttribute(value = "loginMember", required = false) Member loginMember
             ) throws Exception {
 
