@@ -10,5 +10,9 @@ public interface EmailMapper {
 	int updateSupportStatus(Map<String, String> params);
 
 	int updateQnaStatus(Map<String, String> params);
+	
+	int updateAuthKey(Map<String, String> map);
+	int insertAuthKey(Map<String, String> map);
+	int checkAuthKey(Map<String, String> map);
 
 }

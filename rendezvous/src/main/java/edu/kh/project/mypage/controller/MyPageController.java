@@ -163,13 +163,6 @@ public class MyPageController {
 		return myPageService.checkNickname(nickname);
 	}
 
-	/**
-	 * 회원 탈퇴
-	 * 
-	 * @param param   : 프론트에서 보낸 { memberNo: 1 } JSON 데이터
-	 * @param session : 탈퇴 성공 시 로그아웃 처리를 위해 필요
-	 * @return result : 1(성공), 0(실패)
-	 */
 	@PutMapping("/withdraw")
 	public int withdraw(@RequestBody Map<String, Integer> param, HttpSession session) {
 

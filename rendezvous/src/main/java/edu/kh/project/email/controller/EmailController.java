@@ -47,5 +47,22 @@ public class EmailController {
 			return ResponseEntity.status(HttpStatus.OK).body(result);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 	}
+	
+	@PostMapping("signup")
+    public ResponseEntity<Integer> sendAuthEmail(@RequestBody Map<String, String> params) {
+        // 템플릿 안 쓸 거면 service에서 처리한 대로 로직 수정
+        int result = service.sendAuthEmail("signup-auth", params.get("email"));
+        
+        if (result > 0)
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+    }
+    
+    @PostMapping("check")
+    public ResponseEntity<Integer> checkAuthKey(@RequestBody Map<String, String> params) {
+        int result = service.checkAuthKey(params);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 
 }

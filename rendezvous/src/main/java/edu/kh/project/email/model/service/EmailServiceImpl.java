@@ -151,4 +151,76 @@ public class EmailServiceImpl implements EmailService {
 			throw new RuntimeException("메일 발송 실패", e);
 		}
 	}
+
+	@Override
+	public int sendAuthEmail(String htmlName, String email) {
+
+		// 1. 인증키 생성 (6자리 난수)
+		String authKey = createAuthKey();
+
+		try {
+			MimeMessage mimeMessage = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+			helper.setTo(email);
+			helper.setSubject("[Rendezvous] 회원가입 이메일 인증번호입니다.");
+
+			Context context = new Context();
+			context.setVariable("authKey", authKey); // html에서 th:text="${authKey}" 로 사용
+
+			// loadHtml을 써서 이쁜 html 템플릿을 보낼 수도 있고
+			// 템플릿 만들기 귀찮으면 아래처럼 텍스트로 보내도 됨
+			// String htmlContent = loadHtml(htmlName, context);
+
+			// [간편 버전] 템플릿 없이 보내기 (htmlName이 null이면)
+			String htmlContent = "<h1>인증번호 : " + authKey + "</h1>";
+
+			helper.setText(htmlContent, true);
+			// helper.addInline("logo", ...); // 로고 필요하면 추가
+
+			mailSender.send(mimeMessage);
+
+			// 2. DB에 인증키 저장 (Map핑)
+			Map<String, String> map = new java.util.HashMap<>();
+			map.put("email", email);
+			map.put("authKey", authKey);
+
+			// 3. 기존 데이터가 있으면 Update, 없으면 Insert
+			int result = mapper.updateAuthKey(map);
+			if (result == 0) {
+				result = mapper.insertAuthKey(map);
+			}
+
+			return result; // 성공 시 1
+
+		} catch (Exception e) {
+			log.error("이메일 발송 실패 : {}", e.getMessage());
+			return 0;
+		}
+	}
+
+	// --- [추가] 인증번호 검사 메서드 ---
+	@Override
+	public int checkAuthKey(Map<String, String> map) {
+		return mapper.checkAuthKey(map);
+	}
+
+	// [내부 메서드] 6자리 인증키 생성
+	private String createAuthKey() {
+		String key = "";
+		for (int i = 0; i < 6; i++) {
+			int sel1 = (int) (Math.random() * 3); // 0:숫자 / 1,2:영어 (원하는대로 조절)
+			if (sel1 == 0) {
+				int num = (int) (Math.random() * 10);
+				key += num;
+			} else {
+				char ch = (char) (Math.random() * 26 + 65);
+				int num = (int) (Math.random() * 2);
+				if (num == 1)
+					ch += 32; // 소문자
+				key += ch;
+			}
+		}
+		return key;
+	}
 }

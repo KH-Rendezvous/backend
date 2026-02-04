@@ -6,17 +6,34 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import edu.kh.project.member.model.dto.BlockContact;
+import edu.kh.project.member.model.dto.Member;
+import edu.kh.project.member.model.dto.MemberPhoto;
 import edu.kh.project.member.model.dto.MemberProfileRequest;
 
 @Mapper
 public interface MemberMapper {
-    // 차단 등록
+	// 차단 등록
     int insertBlockContact(BlockContact blockDto);
     
-    // 차단 목록 조회 (필요하면 쓰셈)
+    // 차단 목록 조회
     List<BlockContact> selectBlockList(int memberNo);
     
     // 차단 해제
     int deleteBlockContact(BlockContact blockContact);
+    
+    // 프로필 정보 (MemberProfileRequest 사용)
+    int insertMemberProfile(MemberProfileRequest profile);
+
+    // 회원 기본 정보
+    int insertMember(Member member);
+
+    // ★ @Param 추가 (매개변수 2개 이상일 때 필수)
+    Integer selectCodeId(@Param("codeName") String interestName, @Param("category") String category);
+
+    // ★ @Param 추가
+    void insertMemberInterest(@Param("memberNo") int memberNo, @Param("codeId") Integer codeId);
+
+    // 사진 저장
+    void insertMemberPhoto(MemberPhoto photo);
 
 }
