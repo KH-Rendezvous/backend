@@ -13,4 +13,26 @@
 		ANSWER_CONTENT = #{content}
 		WHERE QNA_NO = #{qnaNo}
 	</update>
+	
+	<!-- dev_JJM 이메일 인증 절차 쿼리문 -->
+	<update id="updateAuthKey">
+		UPDATE "AUTH_KEY"
+		SET "AUTH_KEY" = #{authKey},
+		"CREATE_TIME" = SYSDATE
+		WHERE "EMAIL" = #{email}
+	</update>
+
+	<insert id="insertAuthKey">
+		INSERT INTO "AUTH_KEY" ("KEY_NO", "EMAIL", "AUTH_KEY", "CREATE_TIME")
+		VALUES (SEQ_KEY_NO.NEXTVAL, #{email}, #{authKey}, SYSDATE)
+	</insert>
+
+	<select id="checkAuthKey" resultType="_int">
+		SELECT COUNT(*)
+		FROM "AUTH_KEY"
+		WHERE "EMAIL" = #{email}
+		AND "AUTH_KEY" = #{authKey}
+	</select>
+	
+	
 </mapper>
