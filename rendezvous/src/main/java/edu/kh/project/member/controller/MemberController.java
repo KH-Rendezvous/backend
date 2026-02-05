@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,5 +71,14 @@ public class MemberController {
 
         return map;
     }
+	
+	@GetMapping("/check")
+	@ResponseBody
+	public int checkDuplicate(@RequestParam("type") String type, 
+	                          @RequestParam("value") String value) {
+	    // type: "email", "nickname", "phone" 중 하나
+	    // value: 실제 입력값
+	    return service.checkDuplicate(type, value);
+	}
 
 }

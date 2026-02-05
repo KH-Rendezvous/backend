@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>이메일 인증</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Malgun Gothic', 'sans-serif';">
+
+	<table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f5f5; height: 100vh;">
+		<tr>
+			<td align="center" valign="middle">
+
+				<table border="0" cellpadding="0" cellspacing="0" width="600"
+					style="background-color: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); overflow: hidden;">
+
+					<tr>
+						<td align="center" style="padding: 40px 0;">
+							<img src="cid:logo" alt="Rendezvous" width="120"
+							style="display: block; width: 120px; height: auto; border: 0;" />
+						</td>
+					</tr>
+
+					<tr>
+						<td align="center" style="padding: 0 40px 60px 40px;">
+
+							<div style="width: 80px; height: 80px; background-color: #EE4B6F; border-radius: 50%; margin: 0 auto 30px auto; text-align: center; line-height: 80px;">
+								<span style="font-size: 40px; color: white;">🔒</span>
+							</div>
+
+							<h1 style="font-size: 28px; color: #333333; margin: 0 0 15px 0; letter-spacing: -1px;">
+								이메일 인증번호 안내
+							</h1>
+
+							<div style="font-size: 16px; color: #666666; margin: 0 0 30px 0; line-height: 1.6;">
+								<p style="margin: 0;">
+									안녕하세요, Rendezvous입니다.<br />
+									아래 <strong>인증번호 6자리</strong>를 입력해주세요.
+								</p>
+							</div>
+
+							<div style="background-color: #FFF0F3; border: 2px dashed #EE4B6F; border-radius: 15px; padding: 25px 0; margin-bottom: 30px; width: 80%;">
+								<span style="font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #EE4B6F;" th:text="${authKey}">
+									123456
+								</span>
+							</div>
+							
+							<p style="font-size: 13px; color: #999; margin-top: 20px;">
+								* 이 인증번호는 5분간 유효합니다.
+							</p>
+
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+
+</body>
+</html>

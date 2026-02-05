@@ -66,7 +66,6 @@ public class MemberServiceImpl implements MemberService {
 		return mapper.deleteBlockContact(blockContact);
 	}
 
-	// --- [통합] 회원가입 기능 ---
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
@@ -200,26 +199,31 @@ public class MemberServiceImpl implements MemberService {
 	@Override
     public Member login(LoginRequest inputMember) {
         
-        // 1. 이메일로 회원 정보 조회 (DB에서 암호화된 비번 가져옴)
         Member loginMember = mapper.login(inputMember.getEmail());
 
-        // 2. 일치하는 이메일이 없으면 null 리턴
         if (loginMember == null) {
             return null;
         }
 
-        // 3. 탈퇴한 회원이면 로그인 불가
         if (loginMember.getDelFl().equals("Y")) {
-            return null; // 혹은 예외 처리
+            return null;
         }
 
-        // 4. 비밀번호 확인 (입력받은 쌩비번 vs DB의 암호화된 비번)
         if (!bcrypt.matches(inputMember.getPassword(), loginMember.getPassword())) {
-            return null; // 비번 틀림
+            return null;
         }
 
-        // 5. 로그인 성공! (비밀번호는 보안상 null로 밀어버리고 리턴하는 게 국룰)
         loginMember.setPassword(null); 
         return loginMember;
     }
+	
+	@Override
+	public int checkDuplicate(String type, String value) {
+	    // Map에 담아서 Mapper로 전달 (MyBatis 동적 쿼리용)
+	    Map<String, Object> map = new HashMap<>();
+	    map.put("type", type);
+	    map.put("value", value);
+	    
+	    return mapper.checkDuplicate(map);
+	}
 }

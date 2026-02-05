@@ -4,20 +4,24 @@
 	namespace="edu.kh.project.member.model.mapper.MemberMapper">
 
 	<insert id="insertBlockContact" parameterType="BlockContact">
-		INSERT INTO BLOCK_CONTACT (BLOCK_ID, MEMBER_NO, TARGET_NAME, TARGET_PHONE,
+		INSERT INTO
+		BLOCK_CONTACT (BLOCK_ID, MEMBER_NO, TARGET_NAME, TARGET_PHONE,
 		TARGET_EMAIL)
-		VALUES (SEQ_BLOCK_CONTACT_NO.NEXTVAL, #{memberNo}, #{targetName},
+		VALUES (SEQ_BLOCK_CONTACT_NO.NEXTVAL, #{memberNo},
+		#{targetName},
 		#{targetPhone}, #{targetEmail})
 	</insert>
 
 	<select id="selectBlockList" parameterType="_int"
 		resultType="BlockContact">
-		SELECT * FROM BLOCK_CONTACT WHERE MEMBER_NO = #{memberNo} ORDER BY BLOCK_ID
+		SELECT * FROM BLOCK_CONTACT WHERE MEMBER_NO = #{memberNo}
+		ORDER BY BLOCK_ID
 		DESC
 	</select>
 
 	<delete id="deleteBlockContact" parameterType="BlockContact">
-		DELETE FROM BLOCK_CONTACT WHERE BLOCK_ID = #{blockId} AND MEMBER_NO =
+		DELETE FROM
+		BLOCK_CONTACT WHERE BLOCK_ID = #{blockId} AND MEMBER_NO =
 		#{memberNo}
 	</delete>
 
@@ -33,9 +37,11 @@
 		LATITUDE, LONGITUDE, SEARCH_DISTANCE,
 		DEL_FL, CREATE_DATE
 		) VALUES (
-		#{memberNo}, #{email}, #{password}, #{name}, #{nickname}, #{phone},
+		#{memberNo}, #{email}, #{password},
+		#{name}, #{nickname}, #{phone},
 		#{targetGender}, #{relIntentId},
-		0.0, 0.0, NULL, -- ★ [변경] 위경도: 0.0(임시값), 거리: NULL
+		0.0,
+		0.0, NULL, -- ★ [변경] 위경도: 0.0(임시값), 거리: NULL
 		'N', SYSDATE
 		)
 	</insert>
@@ -43,15 +49,18 @@
 	<insert id="insertMemberProfile"
 		parameterType="MemberProfileRequest">
 		INSERT INTO MEMBER_PROFILE (
-		MEMBER_NO, GENDER, BIRTH_DATE, HEIGHT
+		MEMBER_NO, GENDER,
+		BIRTH_DATE, HEIGHT
 		) VALUES (
-		#{memberNo}, #{gender}, TO_DATE(#{birthDate}, 'YYYY-MM-DD'), #{height}
+		#{memberNo}, #{gender},
+		TO_DATE(#{birthDate}, 'YYYY-MM-DD'), #{height}
 		)
 	</insert>
 
 	<select id="selectCodeId" resultType="integer">
 		SELECT CODE_ID
-		FROM MASTER_CODES
+		FROM
+		MASTER_CODES
 		WHERE CODE_NAME = #{codeName}
 		AND CATEGORY = #{category}
 	</select>
@@ -62,10 +71,13 @@
 	</insert>
 
 	<insert id="insertMemberPhoto" parameterType="MemberPhoto">
-		INSERT INTO MEMBER_PHOTOS (
-		PHOTO_ID, MEMBER_NO, ORIGIN_NAME, RENAME_NAME, PHOTO_URL, PHOTO_ORDER
+		INSERT INTO
+		MEMBER_PHOTOS (
+		PHOTO_ID, MEMBER_NO, ORIGIN_NAME, RENAME_NAME,
+		PHOTO_URL, PHOTO_ORDER
 		) VALUES (
-		SEQ_PHOTO_ID.NEXTVAL, #{memberNo}, #{originName}, #{renameName}, #{photoUrl}, #{photoOrder}
+		SEQ_PHOTO_ID.NEXTVAL, #{memberNo},
+		#{originName}, #{renameName}, #{photoUrl}, #{photoOrder}
 		)
 	</insert>
 
@@ -75,9 +87,22 @@
 		PASSWORD,
 		NICKNAME,
 		DEL_FL,
-		REFRESH_TOKEN
-		FROM "MEMBER"
+		REFRESH_TOKEN,
+		MEMBER_STATUS FROM "MEMBER"
 		WHERE EMAIL = #{email}
+		AND DEL_FL = 'N'
+	</select>
+	
+	<select id="checkDuplicate" parameterType="map" resultType="_int">
+	    SELECT COUNT(*) 
+	    FROM "MEMBER"
+	    WHERE 
+	    <choose>
+	        <when test="type == 'email'">EMAIL</when>
+	        <when test="type == 'nickname'">NICKNAME</when>
+	        <when test="type == 'phone'">PHONE</when>
+	    </choose>
+	    = #{value}
 	</select>
 
 </mapper>

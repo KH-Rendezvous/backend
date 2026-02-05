@@ -25,6 +25,8 @@ public interface MemberService {
 	
 	// 로그인
 	Member login(LoginRequest inputMember);
+	
+	int checkDuplicate(String type, String value);
 
 	
 
