@@ -1,6 +1,7 @@
 package edu.kh.project.member.model.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -27,10 +28,9 @@ public interface MemberMapper {
     // 회원 기본 정보
     int insertMember(Member member);
 
-    // ★ @Param 추가 (매개변수 2개 이상일 때 필수)
     Integer selectCodeId(@Param("codeName") String interestName, @Param("category") String category);
 
-    // ★ @Param 추가
+
     void insertMemberInterest(@Param("memberNo") int memberNo, @Param("codeId") Integer codeId);
 
     // 사진 저장
@@ -38,5 +38,7 @@ public interface MemberMapper {
     
     // 로그인
     Member login(String email);
+    
+    int checkDuplicate(Map<String, Object> map);
 
 }

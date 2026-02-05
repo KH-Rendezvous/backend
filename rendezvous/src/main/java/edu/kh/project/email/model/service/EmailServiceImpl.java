@@ -155,48 +155,63 @@ public class EmailServiceImpl implements EmailService {
 	@Override
 	public int sendAuthEmail(String htmlName, String email) {
 
-		// 1. 인증키 생성 (6자리 난수)
+		// 1. 인증키 생성
 		String authKey = createAuthKey();
 
+		// 2. [DB 저장] 먼저 확실하게 박아둠 (이건 순식간임)
 		try {
-			MimeMessage mimeMessage = mailSender.createMimeMessage();
-			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-			helper.setTo(email);
-			helper.setSubject("[Rendezvous] 회원가입 이메일 인증번호입니다.");
-
-			Context context = new Context();
-			context.setVariable("authKey", authKey); // html에서 th:text="${authKey}" 로 사용
-
-			// loadHtml을 써서 이쁜 html 템플릿을 보낼 수도 있고
-			// 템플릿 만들기 귀찮으면 아래처럼 텍스트로 보내도 됨
-			// String htmlContent = loadHtml(htmlName, context);
-
-			// [간편 버전] 템플릿 없이 보내기 (htmlName이 null이면)
-			String htmlContent = "<h1>인증번호 : " + authKey + "</h1>";
-
-			helper.setText(htmlContent, true);
-			// helper.addInline("logo", ...); // 로고 필요하면 추가
-
-			mailSender.send(mimeMessage);
-
-			// 2. DB에 인증키 저장 (Map핑)
 			Map<String, String> map = new java.util.HashMap<>();
 			map.put("email", email);
 			map.put("authKey", authKey);
 
-			// 3. 기존 데이터가 있으면 Update, 없으면 Insert
 			int result = mapper.updateAuthKey(map);
 			if (result == 0) {
 				result = mapper.insertAuthKey(map);
 			}
-
-			return result; // 성공 시 1
-
 		} catch (Exception e) {
-			log.error("이메일 발송 실패 : {}", e.getMessage());
-			return 0;
+			log.error("DB 저장 실패: {}", e.getMessage());
+			return 0; 
 		}
+
+		// 3. [메일 발송] 별도 스레드로 분리 
+		new Thread(() -> {
+			try {
+				MimeMessage mimeMessage = mailSender.createMimeMessage();
+				MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+				helper.setTo(email);
+				helper.setSubject("[Rendezvous] 회원가입 이메일 인증번호입니다.");
+
+				Context context = new Context();
+				context.setVariable("authKey", authKey);
+				
+				// 템플릿 로딩 (실패시 텍스트로 대체)
+				String htmlContent = "";
+				try {
+					htmlContent = loadHtml(htmlName, context);
+				} catch (Exception e) {
+					htmlContent = "<h1>인증번호 : " + authKey + "</h1>";
+				}
+				
+				helper.setText(htmlContent, true);
+
+				// 로고 처리
+				try {
+					helper.addInline("logo", new ClassPathResource("static/images/logo.png"));
+				} catch (Exception e) {
+					// 로고 없으면 그냥 보냄
+				}
+
+				mailSender.send(mimeMessage);
+				log.info("이메일 발송 성공: {}", email);
+
+			} catch (Exception e) {
+				log.error("이메일 발송 실패 (백그라운드): {}", e.getMessage());
+			}
+		}).start(); 
+
+		// 4. 화면에는 즉시 "성공" 응답
+		return 1;
 	}
 
 	// --- [추가] 인증번호 검사 메서드 ---
