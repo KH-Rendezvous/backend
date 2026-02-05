@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import edu.kh.project.common.util.FileUtil;
 import edu.kh.project.email.model.mapper.EmailMapper;
 import edu.kh.project.member.model.dto.BlockContact;
+import edu.kh.project.member.model.dto.LoginRequest;
 import edu.kh.project.member.model.dto.Member;
 import edu.kh.project.member.model.dto.MemberPhoto;
 import edu.kh.project.member.model.dto.MemberProfileRequest;
@@ -195,4 +196,30 @@ public class MemberServiceImpl implements MemberService {
 			return null;
 		}
 	}
+	
+	@Override
+    public Member login(LoginRequest inputMember) {
+        
+        // 1. 이메일로 회원 정보 조회 (DB에서 암호화된 비번 가져옴)
+        Member loginMember = mapper.login(inputMember.getEmail());
+
+        // 2. 일치하는 이메일이 없으면 null 리턴
+        if (loginMember == null) {
+            return null;
+        }
+
+        // 3. 탈퇴한 회원이면 로그인 불가
+        if (loginMember.getDelFl().equals("Y")) {
+            return null; // 혹은 예외 처리
+        }
+
+        // 4. 비밀번호 확인 (입력받은 쌩비번 vs DB의 암호화된 비번)
+        if (!bcrypt.matches(inputMember.getPassword(), loginMember.getPassword())) {
+            return null; // 비번 틀림
+        }
+
+        // 5. 로그인 성공! (비밀번호는 보안상 null로 밀어버리고 리턴하는 게 국룰)
+        loginMember.setPassword(null); 
+        return loginMember;
+    }
 }
