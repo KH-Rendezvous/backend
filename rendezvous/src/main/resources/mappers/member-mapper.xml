@@ -1,64 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edu.kh.project.member.model.mapper.MemberMapper">
+<mapper
+	namespace="edu.kh.project.member.model.mapper.MemberMapper">
 
-    <insert id="insertBlockContact" parameterType="BlockContact">
-        INSERT INTO BLOCK_CONTACT (BLOCK_ID, MEMBER_NO, TARGET_NAME, TARGET_PHONE, TARGET_EMAIL) 
-        VALUES (SEQ_BLOCK_CONTACT_NO.NEXTVAL, #{memberNo}, #{targetName}, #{targetPhone}, #{targetEmail})
-    </insert>
+	<insert id="insertBlockContact" parameterType="BlockContact">
+		INSERT INTO BLOCK_CONTACT (BLOCK_ID, MEMBER_NO, TARGET_NAME, TARGET_PHONE,
+		TARGET_EMAIL)
+		VALUES (SEQ_BLOCK_CONTACT_NO.NEXTVAL, #{memberNo}, #{targetName},
+		#{targetPhone}, #{targetEmail})
+	</insert>
 
-    <select id="selectBlockList" parameterType="_int" resultType="BlockContact">
-        SELECT * FROM BLOCK_CONTACT WHERE MEMBER_NO = #{memberNo} ORDER BY BLOCK_ID DESC
-    </select>
+	<select id="selectBlockList" parameterType="_int"
+		resultType="BlockContact">
+		SELECT * FROM BLOCK_CONTACT WHERE MEMBER_NO = #{memberNo} ORDER BY BLOCK_ID
+		DESC
+	</select>
 
-    <delete id="deleteBlockContact" parameterType="BlockContact">
-        DELETE FROM BLOCK_CONTACT WHERE BLOCK_ID = #{blockId} AND MEMBER_NO = #{memberNo}
-    </delete>
-    
-    <insert id="insertMember" parameterType="Member">
-        <selectKey keyProperty="memberNo" resultType="_int" order="BEFORE">
-            SELECT SEQ_MEMBER_NO.NEXTVAL FROM DUAL
-        </selectKey>
+	<delete id="deleteBlockContact" parameterType="BlockContact">
+		DELETE FROM BLOCK_CONTACT WHERE BLOCK_ID = #{blockId} AND MEMBER_NO =
+		#{memberNo}
+	</delete>
 
-        INSERT INTO MEMBER (
-            MEMBER_NO, EMAIL, PASSWORD, NAME, NICKNAME, PHONE,
-            TARGET_GENDER, REL_INTENT_ID,
-            LATITUDE, LONGITUDE, SEARCH_DISTANCE,
-            DEL_FL, CREATE_DATE
-        ) VALUES (
-            #{memberNo}, #{email}, #{password}, #{name}, #{nickname}, #{phone},
-            #{targetGender}, #{relIntentId}, 
-            0.0, 0.0, NULL,  -- ★ [변경] 위경도: 0.0(임시값), 거리: NULL
-            'N', SYSDATE
-        )
-    </insert>
+	<insert id="insertMember" parameterType="Member">
+		<selectKey keyProperty="memberNo" resultType="_int"
+			order="BEFORE">
+			SELECT SEQ_MEMBER_NO.NEXTVAL FROM DUAL
+		</selectKey>
 
-    <insert id="insertMemberProfile" parameterType="MemberProfileRequest">
-        INSERT INTO MEMBER_PROFILE (
-            MEMBER_NO, GENDER, BIRTH_DATE, HEIGHT
-        ) VALUES (
-            #{memberNo}, #{gender}, TO_DATE(#{birthDate}, 'YYYY-MM-DD'), #{height}
-        )
-    </insert>
+		INSERT INTO MEMBER (
+		MEMBER_NO, EMAIL, PASSWORD, NAME, NICKNAME, PHONE,
+		TARGET_GENDER, REL_INTENT_ID,
+		LATITUDE, LONGITUDE, SEARCH_DISTANCE,
+		DEL_FL, CREATE_DATE
+		) VALUES (
+		#{memberNo}, #{email}, #{password}, #{name}, #{nickname}, #{phone},
+		#{targetGender}, #{relIntentId},
+		0.0, 0.0, NULL, -- ★ [변경] 위경도: 0.0(임시값), 거리: NULL
+		'N', SYSDATE
+		)
+	</insert>
 
-    <select id="selectCodeId" resultType="integer">
-        SELECT CODE_ID 
-        FROM MASTER_CODES 
-        WHERE CODE_NAME = #{codeName}
-        AND CATEGORY = #{category}
-    </select>
+	<insert id="insertMemberProfile"
+		parameterType="MemberProfileRequest">
+		INSERT INTO MEMBER_PROFILE (
+		MEMBER_NO, GENDER, BIRTH_DATE, HEIGHT
+		) VALUES (
+		#{memberNo}, #{gender}, TO_DATE(#{birthDate}, 'YYYY-MM-DD'), #{height}
+		)
+	</insert>
 
-    <insert id="insertMemberInterest">
-        INSERT INTO MEMBER_INTERESTS (MEMBER_NO, INTEREST_ID)
-        VALUES (#{memberNo}, #{codeId})
-    </insert>
+	<select id="selectCodeId" resultType="integer">
+		SELECT CODE_ID
+		FROM MASTER_CODES
+		WHERE CODE_NAME = #{codeName}
+		AND CATEGORY = #{category}
+	</select>
 
-    <insert id="insertMemberPhoto" parameterType="MemberPhoto">
-        INSERT INTO MEMBER_PHOTOS (
-            PHOTO_ID, MEMBER_NO, ORIGIN_NAME, RENAME_NAME, PHOTO_URL, PHOTO_ORDER
-        ) VALUES (
-            SEQ_PHOTO_ID.NEXTVAL, #{memberNo}, #{originName}, #{renameName}, #{photoUrl}, #{photoOrder}
-        )
-    </insert>
-    
+	<insert id="insertMemberInterest">
+		INSERT INTO MEMBER_INTERESTS (MEMBER_NO, INTEREST_ID)
+		VALUES (#{memberNo}, #{codeId})
+	</insert>
+
+	<insert id="insertMemberPhoto" parameterType="MemberPhoto">
+		INSERT INTO MEMBER_PHOTOS (
+		PHOTO_ID, MEMBER_NO, ORIGIN_NAME, RENAME_NAME, PHOTO_URL, PHOTO_ORDER
+		) VALUES (
+		SEQ_PHOTO_ID.NEXTVAL, #{memberNo}, #{originName}, #{renameName}, #{photoUrl}, #{photoOrder}
+		)
+	</insert>
+
+	<select id="login" parameterType="string" resultType="Member">
+		SELECT MEMBER_NO,
+		EMAIL,
+		PASSWORD,
+		NICKNAME,
+		DEL_FL,
+		REFRESH_TOKEN
+		FROM "MEMBER"
+		WHERE EMAIL = #{email}
+	</select>
+
 </mapper>

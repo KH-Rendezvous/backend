@@ -35,5 +35,8 @@ public interface MemberMapper {
 
     // 사진 저장
     void insertMemberPhoto(MemberPhoto photo);
+    
+    // 로그인
+    Member login(String email);
 
 }
