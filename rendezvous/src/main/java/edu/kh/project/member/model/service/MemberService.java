@@ -27,6 +27,9 @@ public interface MemberService {
 	Member login(LoginRequest inputMember);
 	
 	int checkDuplicate(String type, String value);
+	
+	// 리프레시 토큰 DB 업데이트
+	int updateRefreshToken(int memberNo, String refreshToken);
 
 	
 

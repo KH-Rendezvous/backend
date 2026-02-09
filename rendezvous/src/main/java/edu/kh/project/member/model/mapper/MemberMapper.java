@@ -40,5 +40,9 @@ public interface MemberMapper {
     Member login(String email);
     
     int checkDuplicate(Map<String, Object> map);
+    
+    // 리프레시 토큰 업데이트
+    int updateRefreshToken(Map<String, Object> map);
+    
 
 }

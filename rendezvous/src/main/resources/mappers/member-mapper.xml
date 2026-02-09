@@ -82,27 +82,36 @@
 	</insert>
 
 	<select id="login" parameterType="string" resultType="Member">
-		SELECT MEMBER_NO,
+		SELECT
+		MEMBER_NO,
 		EMAIL,
 		PASSWORD,
 		NICKNAME,
 		DEL_FL,
 		REFRESH_TOKEN,
-		MEMBER_STATUS FROM "MEMBER"
+		MEMBER_STATUS
+		FROM "MEMBER"
 		WHERE EMAIL = #{email}
 		AND DEL_FL = 'N'
 	</select>
-	
-	<select id="checkDuplicate" parameterType="map" resultType="_int">
-	    SELECT COUNT(*) 
-	    FROM "MEMBER"
-	    WHERE 
-	    <choose>
-	        <when test="type == 'email'">EMAIL</when>
-	        <when test="type == 'nickname'">NICKNAME</when>
-	        <when test="type == 'phone'">PHONE</when>
-	    </choose>
-	    = #{value}
+
+	<select id="checkDuplicate" parameterType="map"
+		resultType="_int">
+		SELECT COUNT(*)
+		FROM "MEMBER"
+		WHERE
+		<choose>
+			<when test="type == 'email'">EMAIL</when>
+			<when test="type == 'nickname'">NICKNAME</when>
+			<when test="type == 'phone'">PHONE</when>
+		</choose>
+		= #{value}
 	</select>
+
+	<update id="updateRefreshToken">
+		UPDATE "MEMBER"
+		SET "REFRESH_TOKEN" = #{refreshToken}
+		WHERE "MEMBER_NO" = #{memberNo}
+	</update>
 
 </mapper>
