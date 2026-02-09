@@ -26,6 +26,9 @@ public interface MemberService {
 	// 로그인
 	Member login(LoginRequest inputMember);
 	
+	// 위치 정보 업데이트
+	int updateLocation(int memberNo, Double latitude, Double longitude);
+	
 	int checkDuplicate(String type, String value);
 	
 	// 리프레시 토큰 DB 업데이트

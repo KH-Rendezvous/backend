@@ -1,6 +1,7 @@
 package edu.kh.project.member.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -107,5 +108,22 @@ public class MemberController {
 		// value: 실제 입력값
 		return service.checkDuplicate(type, value);
 	}
+	    @PostMapping("/update-location")
+    @ResponseBody
+    public int updateLocation(@RequestBody Map<String, Object> map) {
+        
+        // 프론트에서 { memberNo: 1, latitude: 37.5, longitude: 127.0 } 이렇게 보냄
+        int memberNo = Integer.parseInt(String.valueOf(map.get("memberNo")));
+        
+        // 위치 정보가 없는 경우 방지
+        if(map.get("latitude") == null || map.get("longitude") == null) {
+            return 0;
+        }
+
+        Double lat = Double.parseDouble(String.valueOf(map.get("latitude")));
+        Double lon = Double.parseDouble(String.valueOf(map.get("longitude")));
+
+        return service.updateLocation(memberNo, lat, lon);
+    }
 
 }

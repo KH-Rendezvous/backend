@@ -217,6 +217,12 @@ public class MemberServiceImpl implements MemberService {
         return loginMember;
     }
 	
+	@Transactional(rollbackFor = Exception.class)
+    @Override
+    public int updateLocation(int memberNo, Double latitude, Double longitude) {
+        return mapper.updateLocation(memberNo, latitude, longitude);
+    }
+	
 	@Override
 	public int checkDuplicate(String type, String value) {
 	    // Map에 담아서 Mapper로 전달 (MyBatis 동적 쿼리용)
