@@ -114,4 +114,11 @@
 		WHERE "MEMBER_NO" = #{memberNo}
 	</update>
 
+	<update id="updateLocation">
+		UPDATE "MEMBER"
+		SET LATITUDE = #{latitude},
+		LONGITUDE = #{longitude}
+		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
 </mapper>

@@ -14,35 +14,36 @@ import edu.kh.project.member.model.dto.MemberProfileRequest;
 @Mapper
 public interface MemberMapper {
 	// 차단 등록
-    int insertBlockContact(BlockContact blockDto);
-    
-    // 차단 목록 조회
-    List<BlockContact> selectBlockList(int memberNo);
-    
-    // 차단 해제
-    int deleteBlockContact(BlockContact blockContact);
-    
-    // 프로필 정보 (MemberProfileRequest 사용)
-    int insertMemberProfile(MemberProfileRequest profile);
+	int insertBlockContact(BlockContact blockDto);
 
-    // 회원 기본 정보
-    int insertMember(Member member);
+	// 차단 목록 조회
+	List<BlockContact> selectBlockList(int memberNo);
 
-    Integer selectCodeId(@Param("codeName") String interestName, @Param("category") String category);
+	// 차단 해제
+	int deleteBlockContact(BlockContact blockContact);
 
+	// 프로필 정보 (MemberProfileRequest 사용)
+	int insertMemberProfile(MemberProfileRequest profile);
 
-    void insertMemberInterest(@Param("memberNo") int memberNo, @Param("codeId") Integer codeId);
+	// 회원 기본 정보
+	int insertMember(Member member);
 
-    // 사진 저장
-    void insertMemberPhoto(MemberPhoto photo);
-    
-    // 로그인
-    Member login(String email);
-    
-    int checkDuplicate(Map<String, Object> map);
-    
-    // 리프레시 토큰 업데이트
-    int updateRefreshToken(Map<String, Object> map);
-    
+	Integer selectCodeId(@Param("codeName") String interestName, @Param("category") String category);
+
+	void insertMemberInterest(@Param("memberNo") int memberNo, @Param("codeId") Integer codeId);
+
+	// 사진 저장
+	void insertMemberPhoto(MemberPhoto photo);
+
+	// 로그인
+	Member login(String email);
+
+	int checkDuplicate(Map<String, Object> map);
+
+	// 리프레시 토큰 업데이트
+	int updateRefreshToken(Map<String, Object> map);
+
+	int updateLocation(@Param("memberNo") int memberNo, @Param("latitude") Double latitude,
+			@Param("longitude") Double longitude);
 
 }
