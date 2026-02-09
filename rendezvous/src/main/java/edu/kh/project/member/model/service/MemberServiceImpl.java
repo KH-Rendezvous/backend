@@ -226,4 +226,12 @@ public class MemberServiceImpl implements MemberService {
 	    
 	    return mapper.checkDuplicate(map);
 	}
+	
+	@Override
+	public int updateRefreshToken(int memberNo, String refreshToken) {
+	    Map<String, Object> map = new HashMap<>();
+	    map.put("memberNo", memberNo);
+	    map.put("refreshToken", refreshToken);
+	    return mapper.updateRefreshToken(map); 
+	}
 }

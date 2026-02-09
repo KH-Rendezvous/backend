@@ -1,5 +1,6 @@
 package edu.kh.project.email.model.service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.core.io.ClassPathResource;
@@ -24,6 +25,7 @@ public class EmailServiceImpl implements EmailService {
 	private final EmailMapper mapper;
 	private final JavaMailSender mailSender;
 	private final SpringTemplateEngine templateEngine;
+	private final AsyncMailSender asyncMailSender;
 
 	private String loadHtml(String htmlName, Context context) {
 		return templateEngine.process("email/" + htmlName, context);
@@ -153,66 +155,32 @@ public class EmailServiceImpl implements EmailService {
 	}
 
 	@Override
-	public int sendAuthEmail(String htmlName, String email) {
+    public int sendAuthEmail(String htmlName, String email) {
+        
+        // 1. 인증키 생성 (6자리 난수 등등 니 로직대로)
+        String authKey = createAuthKey(); 
 
-		// 1. 인증키 생성
-		String authKey = createAuthKey();
+        // 2. DB 작업 (동기 처리 - 빨라야 함)
+        Map<String, String> map = new HashMap<>();
+        map.put("email", email);
+        map.put("authKey", authKey);
 
-		// 2. [DB 저장] 먼저 확실하게 박아둠 (이건 순식간임)
-		try {
-			Map<String, String> map = new java.util.HashMap<>();
-			map.put("email", email);
-			map.put("authKey", authKey);
+        int result = mapper.updateAuthKey(map);
+        if(result == 0) {
+            result = mapper.insertAuthKey(map);
+        }
 
-			int result = mapper.updateAuthKey(map);
-			if (result == 0) {
-				result = mapper.insertAuthKey(map);
-			}
-		} catch (Exception e) {
-			log.error("DB 저장 실패: {}", e.getMessage());
-			return 0; 
-		}
+        // 3. DB 성공했으면 메일 발송 요청 (비동기)
+        if (result > 0) {
+            Context context = new Context();
+            context.setVariable("authKey", authKey);
+            
+            asyncMailSender.sendHtmlMail(email, "[Rendezvous] 이메일 인증", "email/" + htmlName, context);
+        }
 
-		// 3. [메일 발송] 별도 스레드로 분리 
-		new Thread(() -> {
-			try {
-				MimeMessage mimeMessage = mailSender.createMimeMessage();
-				MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-				helper.setTo(email);
-				helper.setSubject("[Rendezvous] 회원가입 이메일 인증번호입니다.");
-
-				Context context = new Context();
-				context.setVariable("authKey", authKey);
-				
-				// 템플릿 로딩 (실패시 텍스트로 대체)
-				String htmlContent = "";
-				try {
-					htmlContent = loadHtml(htmlName, context);
-				} catch (Exception e) {
-					htmlContent = "<h1>인증번호 : " + authKey + "</h1>";
-				}
-				
-				helper.setText(htmlContent, true);
-
-				// 로고 처리
-				try {
-					helper.addInline("logo", new ClassPathResource("static/images/logo.png"));
-				} catch (Exception e) {
-					// 로고 없으면 그냥 보냄
-				}
-
-				mailSender.send(mimeMessage);
-				log.info("이메일 발송 성공: {}", email);
-
-			} catch (Exception e) {
-				log.error("이메일 발송 실패 (백그라운드): {}", e.getMessage());
-			}
-		}).start(); 
-
-		// 4. 화면에는 즉시 "성공" 응답
-		return 1;
-	}
+        // 4. 결과 리턴 (사용자는 즉시 응답 받음)
+        return result;
+    }
 
 	// --- [추가] 인증번호 검사 메서드 ---
 	@Override
