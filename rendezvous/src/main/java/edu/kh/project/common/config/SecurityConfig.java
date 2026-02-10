@@ -1,4 +1,4 @@
-package edu.kh.project.common.config; // 패키지명은 본인 프로젝트에 맞게 수정하세요
+package edu.kh.project.common.config; 
 
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class SecurityConfig {
 		return source;
 	}
 	
-	@Bean // 스프링아, 이 메서드가 반환하는 객체를 'Bean'으로 등록해서 관리해줘!
+	@Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }

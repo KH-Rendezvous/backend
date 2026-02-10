@@ -38,7 +38,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 						"/api/member/signup", // 회원가입
 						"/api/member/check", // 중복검사
 						"/api/member/refresh", // ★ 토큰 재발급 (이거 막으면 갱신 못 함!)
-						"/api/member/logout" // 로그아웃
+						"/api/member/logout", // 로그아웃
+						"/api/member/find-email",    // 이메일 찾기
+						"/api/member/check-info", // 회원 정보 확인
+						"/api/member/reset-password" // 비밀번호 찾기
 				);
 	}
 }

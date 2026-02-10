@@ -117,8 +117,38 @@
 	<update id="updateLocation">
 		UPDATE "MEMBER"
 		SET LATITUDE = #{latitude},
-		LONGITUDE = #{longitude}
+		LONGITUDE =
+		#{longitude}
 		WHERE MEMBER_NO = #{memberNo}
+	</update>
+
+	<select id="findEmail" parameterType="map" resultType="string">
+		SELECT m.EMAIL
+		FROM MEMBER m
+		JOIN MEMBER_PROFILE mp ON m.MEMBER_NO = mp.MEMBER_NO
+		WHERE m.NAME = #{name}
+		AND m.PHONE = #{phone}
+		AND TO_CHAR(mp.BIRTH_DATE, 'YYYYMMDD') = #{birth}
+		AND m.DEL_FL = 'N'
+	</select>
+
+	<select id="checkMemberInfo" parameterType="map"
+		resultType="_int">
+		SELECT COUNT(*)
+		FROM MEMBER m
+		JOIN MEMBER_PROFILE mp ON m.MEMBER_NO = mp.MEMBER_NO
+		WHERE m.EMAIL = #{email}
+		AND m.NAME = #{name}
+		AND m.PHONE = #{phone}
+		AND TO_CHAR(mp.BIRTH_DATE, 'YYYYMMDD') = #{birth}
+		AND m.DEL_FL = 'N'
+	</select>
+
+	<update id="resetPassword" parameterType="map">
+		UPDATE MEMBER
+		SET PASSWORD = #{encPassword}
+		WHERE EMAIL = #{email}
+		AND DEL_FL = 'N'
 	</update>
 
 </mapper>

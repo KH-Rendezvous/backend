@@ -45,5 +45,10 @@ public interface MemberMapper {
 
 	int updateLocation(@Param("memberNo") int memberNo, @Param("latitude") Double latitude,
 			@Param("longitude") Double longitude);
+	
+	String findEmail(Map<String, String> params);
+	
+	int checkMemberInfo(Map<String, String> params);
+    int resetPassword(Map<String, String> params);
 
 }

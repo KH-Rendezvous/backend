@@ -1,8 +1,11 @@
 package edu.kh.project.member.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +24,9 @@ import edu.kh.project.member.model.dto.SignupRequest;
 import edu.kh.project.member.model.service.MemberService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/member")
 @RequiredArgsConstructor
@@ -108,22 +113,74 @@ public class MemberController {
 		// value: 실제 입력값
 		return service.checkDuplicate(type, value);
 	}
-	    @PostMapping("/update-location")
-    @ResponseBody
-    public int updateLocation(@RequestBody Map<String, Object> map) {
+
+	@PostMapping("/update-location")
+	@ResponseBody
+	public int updateLocation(@RequestBody Map<String, Object> map) {
+
+		// 프론트에서 { memberNo: 1, latitude: 37.5, longitude: 127.0 } 이렇게 보냄
+		int memberNo = Integer.parseInt(String.valueOf(map.get("memberNo")));
+
+		// 위치 정보가 없는 경우 방지
+		if (map.get("latitude") == null || map.get("longitude") == null) {
+			return 0;
+		}
+
+		Double lat = Double.parseDouble(String.valueOf(map.get("latitude")));
+		Double lon = Double.parseDouble(String.valueOf(map.get("longitude")));
+
+		return service.updateLocation(memberNo, lat, lon);
+	}
+
+	// 이메일 찾기
+	@PostMapping("/find-email")
+	public ResponseEntity<?> findEmail(@RequestBody Map<String, String> params) {
+		log.info("이메일 찾기 요청: {}", params);
+		// params: {name=홍길동, birth=19990101, phone=01012341234}
+
+		try {
+			String email = service.findEmail(params);
+
+			if (email != null) {
+				Map<String, String> result = new HashMap<>();
+				result.put("email", email);
+				return ResponseEntity.ok(result);
+			} else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("일치하는 회원이 없습니다.");
+			}
+		} catch (Exception e) {
+			log.error("이메일 찾기 중 에러 발생", e);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 에러");
+		}
+	}
+	// 1. 회원 정보 일치 확인 (비밀번호 찾기 1단계)
+    @PostMapping("/check-info")
+    public ResponseEntity<?> checkInfo(@RequestBody Map<String, String> params) {
+        log.info("비번찾기 정보확인 요청: {}", params);
+        // params: {email, name, birth, phone}
         
-        // 프론트에서 { memberNo: 1, latitude: 37.5, longitude: 127.0 } 이렇게 보냄
-        int memberNo = Integer.parseInt(String.valueOf(map.get("memberNo")));
+        int count = service.checkMemberInfo(params);
         
-        // 위치 정보가 없는 경우 방지
-        if(map.get("latitude") == null || map.get("longitude") == null) {
-            return 0;
+        if (count > 0) {
+            return ResponseEntity.ok(true); // 정보 일치
+        } else {
+            return ResponseEntity.ok(false); // 불일치
         }
+    }
 
-        Double lat = Double.parseDouble(String.valueOf(map.get("latitude")));
-        Double lon = Double.parseDouble(String.valueOf(map.get("longitude")));
-
-        return service.updateLocation(memberNo, lat, lon);
+    // 2. 비밀번호 재설정 (비밀번호 찾기 2단계)
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> params) {
+        log.info("비번 재설정 요청: {}", params.get("email"));
+        // params: {email, password}
+        
+        int result = service.resetPassword(params);
+        
+        if (result > 0) {
+            return ResponseEntity.ok(result);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("변경 실패");
+        }
     }
 
 }
