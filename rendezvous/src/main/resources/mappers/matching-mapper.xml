@@ -2,24 +2,155 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.kh.project.matching.model.mapper.MatchingMapper">
 
-    <select id="selectDiscoveryList" resultType="edu.kh.project.matching.model.dto.MatchingUserDTO">
-        SELECT 
-            M.MEMBER_NO, 
-            M.NICKNAME, 
-            P.INTRO, 
-            P.RESIDENCE, 
-            P.MBTI,
-            P.GENDER,
-            FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) AS AGE,
-            MP.PHOTO_URL,
-            '10' AS DISTANCE 
-        FROM "MEMBER" M
-        JOIN "MEMBER_PROFILE" P ON (M.MEMBER_NO = P.MEMBER_NO)
-        JOIN "MEMBER_PHOTOS" MP ON (M.MEMBER_NO = MP.MEMBER_NO)
-        WHERE M.DEL_FL = 'N'
-          AND M.MEMBER_NO != #{memberNo}
-          AND P.GENDER = (SELECT TARGET_GENDER FROM "MEMBER" WHERE MEMBER_NO = #{memberNo})
-          AND MP.PHOTO_ORDER = 1
-    </select>
+	<resultMap id="matchingUserResultMap" type="edu.kh.project.matching.model.dto.MatchingUserDTO">
+		<id property="memberNo" column="MEMBER_NO" />
+		<result property="nickname" column="NICKNAME" />
+		<result property="intro" column="INTRO" />
+		<result property="residence" column="RESIDENCE" />
+		<result property="mbti" column="MBTI" />
+		<result property="age" column="AGE" />
+		<result property="gender" column="GENDER" />
+		<result property="relIntent" column="REL_INTENT_NAME" />
+		<result property="photoUrl" column="PHOTO_URL" />
+		<collection property="photos" ofType="string" javaType="list">
+			<result column="PHOTO_URL" />
+		</collection>
+	</resultMap>
+
+	<select id="selectDiscoveryList" resultMap="matchingUserResultMap">
+		SELECT * FROM (
+			SELECT 
+				M.MEMBER_NO, 
+				M.NICKNAME, 
+				P.INTRO, 
+				P.RESIDENCE, 
+				P.MBTI,
+				P.GENDER,
+				M.REL_INTENT_ID,
+				FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) AS AGE,
+				NVL(MP.PHOTO_URL, '/images/default-profile.png') AS PHOTO_URL,
+				ROUND(6371 * ACOS(
+					COS(TRUNC(NVL(#{latitude}, 37.5665), 7) * 0.0174532925) * COS(TRUNC(M.LATITUDE, 7) * 0.0174532925) *
+					COS((TRUNC(M.LONGITUDE, 7) * 0.0174532925) - (TRUNC(NVL(#{longitude}, 126.9780), 7) * 0.0174532925)) +
+					SIN(TRUNC(NVL(#{latitude}, 37.5665), 7) * 0.0174532925) * SIN(TRUNC(M.LATITUDE, 7) * 0.0174532925)
+				), 1) AS DISTANCE
+			FROM "MEMBER" M
+			JOIN "MEMBER_PROFILE" P ON (M.MEMBER_NO = P.MEMBER_NO)
+			LEFT JOIN "MEMBER_PHOTOS" MP ON (M.MEMBER_NO = MP.MEMBER_NO AND MP.PHOTO_ORDER = 1)
+			WHERE M.DEL_FL = 'N'
+			  AND M.MEMBER_STATUS = 'Y' 
+			  AND M.MEMBER_NO != #{memberNo} 
+			  
+			  <choose>
+			  	  <when test='gender != null and (gender == "ALL" or gender == "모두")'>
+			  	  	  </when>
+				  <when test='gender != null and gender != ""'>
+					  AND (
+						  P.GENDER = #{gender} 
+						  OR 
+						  P.GENDER = CASE 
+							  WHEN #{gender} = '남성' THEN 'M'
+							  WHEN #{gender} = '여성' THEN 'F'
+							  ELSE #{gender}
+						  END
+					  )
+				  </when>
+				  <otherwise>
+					  AND P.GENDER = (SELECT TARGET_GENDER FROM "MEMBER" WHERE MEMBER_NO = #{memberNo})
+				  </otherwise>
+			  </choose>
+
+			  AND FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) 
+				  BETWEEN 
+				  <choose>
+					  <when test="minAge != null and minAge != 0">#{minAge}</when>
+					  <otherwise>0</otherwise>
+				  </choose>
+				  AND 
+				  <choose>
+					  <when test="maxAge != null and maxAge != 0">#{maxAge}</when>
+					  <otherwise>120</otherwise>
+				  </choose>
+		)
+		WHERE (
+			<choose>
+				<when test="distance != null and distance != 0">DISTANCE &lt;= #{distance}</when>
+				<otherwise>DISTANCE &lt;= 100</otherwise>
+			</choose>
+			OR DISTANCE IS NULL
+		)
+		ORDER BY DISTANCE ASC
+	</select>
+
+	<select id="selectMemberDetail" resultMap="matchingUserResultMap">
+		SELECT
+			M.MEMBER_NO, M.NICKNAME,
+			P.INTRO, P.RESIDENCE, P.MBTI, P.GENDER,
+			FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) AS AGE,
+			MP.PHOTO_URL,
+			C.CODE_NAME AS REL_INTENT_NAME
+		FROM "MEMBER" M
+		JOIN "MEMBER_PROFILE" P ON (M.MEMBER_NO = P.MEMBER_NO)
+		LEFT JOIN "MEMBER_PHOTOS" MP ON (M.MEMBER_NO = MP.MEMBER_NO)
+		LEFT JOIN "MASTER_CODES" C ON (M.REL_INTENT_ID = C.CODE_ID)
+		WHERE M.MEMBER_NO = #{targetNo}
+		ORDER BY MP.PHOTO_ORDER ASC
+	</select>
+
+	<select id="selectReceivedLikes" resultMap="matchingUserResultMap">
+		SELECT
+			M.MEMBER_NO, M.NICKNAME, P.INTRO, P.RESIDENCE,
+			FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) AS AGE,
+			MP.PHOTO_URL
+		FROM "MEMBER_ACTION" A
+		JOIN "MEMBER" M ON (A.SENDER_NO = M.MEMBER_NO)
+		JOIN "MEMBER_PROFILE" P ON (M.MEMBER_NO = P.MEMBER_NO)
+		JOIN "MEMBER_PHOTOS" MP ON (M.MEMBER_NO = MP.MEMBER_NO)
+		WHERE A.RECEIVER_NO = #{memberNo}
+		  AND A.ACTION_TYPE = 'LIKE'
+		  AND MP.PHOTO_ORDER = 1
+	</select>
+
+	<select id="selectSentLikes" resultMap="matchingUserResultMap">
+		SELECT
+			M.MEMBER_NO, M.NICKNAME, P.INTRO, P.RESIDENCE,
+			FLOOR(MONTHS_BETWEEN(SYSDATE, P.BIRTH_DATE) / 12) AS AGE,
+			MP.PHOTO_URL
+		FROM "MEMBER_ACTION" A
+		JOIN "MEMBER" M ON (A.RECEIVER_NO = M.MEMBER_NO)
+		JOIN "MEMBER_PROFILE" P ON (M.MEMBER_NO = P.MEMBER_NO)
+		JOIN "MEMBER_PHOTOS" MP ON (M.MEMBER_NO = MP.MEMBER_NO)
+		WHERE A.SENDER_NO = #{memberNo}
+		  AND A.ACTION_TYPE = 'LIKE'
+		  AND MP.PHOTO_ORDER = 1
+	</select>
+
+	<delete id="deleteLikeAction">
+		DELETE FROM "MEMBER_ACTION"
+		WHERE SENDER_NO = #{myNo}
+		  AND RECEIVER_NO = #{targetNo}
+		  AND ACTION_TYPE = 'LIKE'
+	</delete>
+
+	<insert id="insertMemberAction">
+		INSERT INTO "MEMBER_ACTION" (
+			ACTION_NO, ACTION_TYPE, INPUT_TYPE, ACTION_DATE, SENDER_NO, RECEIVER_NO
+		) VALUES (
+			SEQ_ACTION_NO.NEXTVAL, #{actionType}, #{inputType}, SYSDATE, #{senderNo}, #{receiverNo}
+		)
+	</insert>
+
+	<select id="checkMatch" resultType="_int">
+		SELECT COUNT(*) FROM "MEMBER_ACTION"
+		WHERE SENDER_NO = #{targetNo}
+		  AND RECEIVER_NO = #{myNo}
+		  AND ACTION_TYPE = 'LIKE'
+		  AND EXISTS (
+			SELECT 1 FROM "MEMBER_ACTION"
+			WHERE SENDER_NO = #{myNo}
+			  AND RECEIVER_NO = #{targetNo}
+			  AND ACTION_TYPE = 'LIKE'
+		  )
+	</select>
 
 </mapper>
