@@ -1,6 +1,7 @@
 package edu.kh.project.member.model.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,6 +34,14 @@ public interface MemberService {
 	
 	// 리프레시 토큰 DB 업데이트
 	int updateRefreshToken(int memberNo, String refreshToken);
+	
+	String findEmail(Map<String, String> params);
+	
+	/* 비밀번호 찾기 시 회원 정보 확인 */
+    int checkMemberInfo(Map<String, String> params);
+
+    /* 비밀번호 재설정 */
+    int resetPassword(Map<String, String> params);
 
 	
 

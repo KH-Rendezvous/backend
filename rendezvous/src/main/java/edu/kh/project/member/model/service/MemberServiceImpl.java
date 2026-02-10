@@ -66,12 +66,11 @@ public class MemberServiceImpl implements MemberService {
 		return mapper.deleteBlockContact(blockContact);
 	}
 
-
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public int signup(SignupRequest input, List<MultipartFile> images) {
 
-		// 인증번호 검사
+		// 1. 이메일 인증번호 검사
 		Map<String, String> authMap = new HashMap<>();
 		authMap.put("email", input.getEmail());
 		authMap.put("authKey", input.getAuthKey());
@@ -79,78 +78,77 @@ public class MemberServiceImpl implements MemberService {
 		int check = emailMapper.checkAuthKey(authMap);
 
 		if (check == 0) {
-			// 인증번호 불일치 시 예외 발생시켜서 롤백
 			throw new RuntimeException("인증번호가 일치하지 않습니다.");
 		}
 
+		// 2. Member 객체 생성 및 기본 정보 설정
 		Member member = new Member();
 		member.setEmail(input.getEmail());
-		member.setPassword(bcrypt.encode(input.getPassword()));
+		member.setPassword(bcrypt.encode(input.getPassword())); // 비번 암호화
 		member.setName(input.getName());
 		member.setNickname(input.getNickname());
 		member.setPhone(input.getPhone());
 
-		// TargetGender 처리
+		// TargetGender 처리 (ALL -> A)
 		String target = input.getTargetGender();
 		member.setTargetGender("ALL".equals(target) ? "A" : target);
 
 		// 관계(한글) -> ID(숫자) 변환
 		member.setRelIntentId(convertRelationToId(input.getRelation()));
 
-		// 필수값 기본 세팅
+		// 필수값 기본 세팅 (서울 시청 좌표 등)
 		member.setLatitude(37.5665);
 		member.setLongitude(126.9780);
-		member.setSearchDistance(10);
+		member.setSearchDistance(10); // 기본 검색 거리 10km
 
+		// MEMBER 테이블 Insert
 		int result = mapper.insertMember(member);
-		if (result == 0)
-			return 0;
+		if (result == 0) return 0;
 
-		int memberNo = member.getMemberNo(); // 생성된 회원 번호
+		// insertMember 실행 후 member.getMemberNo()에 시퀀스 값이 담겨 있어야 함 (Mapper <selectKey> 필수)
+		int memberNo = member.getMemberNo(); 
 
-		// 2. MEMBER_PROFILE 테이블 저장
+		// 3. MEMBER_PROFILE 테이블 저장
 		MemberProfileRequest profile = new MemberProfileRequest();
 		profile.setMemberNo(memberNo);
 		profile.setGender(input.getGender());
 		profile.setHeight(0); // 키 정보 없음(0 처리)
 
-		// 날짜 합쳐서 String으로 전달 (Mapper에서 TO_DATE 처리)
+		// 날짜 포맷 (YYYY-MM-DD)
 		String birthStr = String.format("%s-%s-%s", input.getBirthYear(), input.getBirthMonth(), input.getBirthDay());
 		profile.setBirthDate(birthStr);
 
 		mapper.insertMemberProfile(profile);
 
-		// 3. MEMBER_INTERESTS 테이블 저장 (관심사)
+		// 4. MEMBER_INTERESTS 테이블 저장 (관심사)
 		if (input.getInterests() != null) {
 			for (String interestName : input.getInterests()) {
-				// DB에서 이름으로 코드 ID 조회 (예: "맛집" -> 202)
+				// DB에서 이름으로 코드 ID 조회
 				Integer codeId = mapper.selectCodeId(interestName, "관심사");
-
 				if (codeId != null) {
 					mapper.insertMemberInterest(memberNo, codeId);
 				}
 			}
 		}
 
-		// 4. MEMBER_PHOTOS 테이블 저장 (이미지)
+		// 5. MEMBER_PHOTOS 테이블 저장 (이미지)
 		if (images != null && !images.isEmpty()) {
 
-			// 폴더가 없으면 생성
+			// 폴더 경로 뒤에 슬래시 없으면 붙여주기 (안전장치)
+			if (!folderPath.endsWith("/")) {
+				folderPath += "/";
+			}
+
 			File folder = new File(folderPath);
-			if (!folder.exists())
-				folder.mkdirs();
+			if (!folder.exists()) folder.mkdirs();
 
 			for (int i = 0; i < images.size(); i++) {
 				MultipartFile file = images.get(i);
-				if (file.isEmpty())
-					continue;
+				if (file.isEmpty()) continue;
 
 				String originName = file.getOriginalFilename();
-
-				// ★ FileUtil을 사용하여 파일명 변경
-				String renameName = FileUtil.rename(originName);
-
-				String url = webPath + renameName; // 웹 접근 경로 + 파일명
+				String renameName = FileUtil.rename(originName); // 파일명 변경
+				String url = webPath + renameName; // 웹 접근 경로
 
 				// 실제 파일 저장
 				try {
@@ -166,7 +164,7 @@ public class MemberServiceImpl implements MemberService {
 				photo.setOriginName(originName);
 				photo.setRenameName(renameName);
 				photo.setPhotoUrl(url);
-				photo.setPhotoOrder(i + 1);
+				photo.setPhotoOrder(i + 1); // 순서 1부터 시작
 
 				mapper.insertMemberPhoto(photo);
 			}
@@ -175,69 +173,85 @@ public class MemberServiceImpl implements MemberService {
 		return 1;
 	}
 
+	// 관계 문자열 -> ID 변환 헬퍼 메소드
 	private Integer convertRelationToId(String relation) {
-		if (relation == null)
-			return null;
+		if (relation == null) return null;
 		switch (relation) {
-		case "진지한 연애":
-			return 101;
-		case "천천히 서로 알아가기":
-			return 102;
-		case "연애는 부담, 데이트만 선호":
-			return 103;
-		case "심심할 때 부를 술/밥 친구":
-			return 104;
-		case "같이 취미 즐길 동네 친구":
-			return 105;
-		case "아직 모르겠음":
-			return 106;
-		default:
-			return null;
+			case "진지한 연애": return 101;
+			case "천천히 서로 알아가기": return 102;
+			case "연애는 부담, 데이트만 선호": return 103;
+			case "심심할 때 부를 술/밥 친구": return 104;
+			case "같이 취미 즐길 동네 친구": return 105;
+			case "아직 모르겠음": return 106;
+			default: return null;
 		}
 	}
 	
 	@Override
-    public Member login(LoginRequest inputMember) {
-        
-        Member loginMember = mapper.login(inputMember.getEmail());
+	public Member login(LoginRequest inputMember) {
+		Member loginMember = mapper.login(inputMember.getEmail());
 
-        if (loginMember == null) {
-            return null;
-        }
+		if (loginMember == null) {
+			return null;
+		}
 
-        if (loginMember.getDelFl().equals("Y")) {
-            return null;
-        }
+		// 탈퇴 회원 체크
+		if (loginMember.getDelFl().equals("Y")) {
+			return null;
+		}
 
-        if (!bcrypt.matches(inputMember.getPassword(), loginMember.getPassword())) {
-            return null;
-        }
+		// 비밀번호 불일치 체크
+		if (!bcrypt.matches(inputMember.getPassword(), loginMember.getPassword())) {
+			return null;
+		}
 
-        loginMember.setPassword(null); 
-        return loginMember;
-    }
+		// 보안상 비밀번호는 비워서 리턴
+		loginMember.setPassword(null); 
+		return loginMember;
+	}
 	
 	@Transactional(rollbackFor = Exception.class)
-    @Override
-    public int updateLocation(int memberNo, Double latitude, Double longitude) {
-        return mapper.updateLocation(memberNo, latitude, longitude);
-    }
+	@Override
+	public int updateLocation(int memberNo, Double latitude, Double longitude) {
+		return mapper.updateLocation(memberNo, latitude, longitude);
+	}
 	
 	@Override
 	public int checkDuplicate(String type, String value) {
-	    // Map에 담아서 Mapper로 전달 (MyBatis 동적 쿼리용)
-	    Map<String, Object> map = new HashMap<>();
-	    map.put("type", type);
-	    map.put("value", value);
-	    
-	    return mapper.checkDuplicate(map);
+		Map<String, Object> map = new HashMap<>();
+		map.put("type", type);
+		map.put("value", value);
+		
+		return mapper.checkDuplicate(map);
 	}
 	
 	@Override
 	public int updateRefreshToken(int memberNo, String refreshToken) {
-	    Map<String, Object> map = new HashMap<>();
-	    map.put("memberNo", memberNo);
-	    map.put("refreshToken", refreshToken);
-	    return mapper.updateRefreshToken(map); 
+		Map<String, Object> map = new HashMap<>();
+		map.put("memberNo", memberNo);
+		map.put("refreshToken", refreshToken);
+		return mapper.updateRefreshToken(map); 
 	}
+	
+	@Override
+	public String findEmail(Map<String, String> params) {
+		return mapper.findEmail(params);
+	}
+	
+	@Override
+    public int checkMemberInfo(Map<String, String> params) {
+        return mapper.checkMemberInfo(params);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public int resetPassword(Map<String, String> params) {
+        // 비밀번호 암호화
+        String rawPassword = params.get("password");
+        String encPassword = bcrypt.encode(rawPassword);
+        
+        params.put("encPassword", encPassword); // 암호화된 걸로 교체
+        
+        return mapper.resetPassword(params);
+    }
 }
