@@ -13,7 +13,7 @@ import edu.kh.project.member.model.dto.MemberProfileRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AdminController {
 
@@ -62,4 +62,9 @@ public class AdminController {
 	public List<Qna> getAdminQnaList() {
 		return service.getAdminQnaList();
 	}
+	
+	@PostMapping("/qna/answer")
+    public int updateAnswer(@RequestBody Qna qna) {
+        return service.updateAnswer(qna);
+    }
 }
