@@ -19,17 +19,22 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http
-				// 1. CSRF 비활성화 (POST 요청이 막히는 주 원인)
-				.csrf(AbstractHttpConfigurer::disable)
+	    http
+	        .csrf(AbstractHttpConfigurer::disable)
+	        .cors(cors -> cors.configurationSource(configurationSource()))
+	        .authorizeHttpRequests(auth -> auth
+	            .requestMatchers(
+	                "/api/member/login", 
+	                "/api/member/signup", 
+	                "/api/member/check",
+	                "/api/email/**",
+	                "/api/auth/**",
+	                "/api/main/support"
+	            ).permitAll()
+	            .anyRequest().permitAll()
+	        );
 
-				// 2. CORS 설정 적용 (아래에서 만든 설정을 사용하겠다고 명시)
-				.cors(cors -> cors.configurationSource(configurationSource()))
-
-				// 3. 모든 요청 허용 (로그인 없이도 통신 가능하게)
-				.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-
-		return http.build();
+	    return http.build();
 	}
 
 	// CORS 설정을 여기서 통합 관리합니다.

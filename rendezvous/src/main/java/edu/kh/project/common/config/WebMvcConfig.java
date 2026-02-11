@@ -41,7 +41,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
 						"/api/member/logout", // 로그아웃
 						"/api/member/find-email",    // 이메일 찾기
 						"/api/member/check-info", // 회원 정보 확인
-						"/api/member/reset-password" // 비밀번호 찾기
+						"/api/member/reset-password", // 비밀번호 찾기
+						"/api/email/**",       // 이메일 전송/인증 확인
+		                "/api/auth/**",        // 인증 관련
+		                "/api/main/support"    // 아까 보니까 이것도 있더만
 				);
 	}
 }
