@@ -13,7 +13,7 @@ import edu.kh.project.email.model.service.EmailService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("email")
+@RequestMapping("/api/email")
 @RequiredArgsConstructor
 public class EmailController {
 	private final EmailService service;

@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("main")
+@RequestMapping("/api/main")
 @PropertySource("classpath:config.properties")
 public class MainController {
 

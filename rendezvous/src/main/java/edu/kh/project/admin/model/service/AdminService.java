@@ -19,5 +19,7 @@ public interface AdminService {
 
 	int processReport(Map<String, Object> params);
 	List<Qna> getAdminQnaList();
+	
+	int updateAnswer(Qna qna);
 
 }
