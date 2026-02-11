@@ -10,6 +10,7 @@ import edu.kh.project.member.model.dto.MasterCode;
 import edu.kh.project.member.model.dto.Member;
 import edu.kh.project.member.model.dto.MemberPhoto;
 import edu.kh.project.member.model.dto.MemberProfileRequest;
+import edu.kh.project.member.model.dto.MemberProfileRequest.PreservedImage;
 
 @Mapper
 public interface MyPageMapper {
@@ -46,4 +47,6 @@ public interface MyPageMapper {
     void deleteProfileImages(List<Integer> deleteList);
     void insertOrUpdateProfileImage(MemberPhoto photo);
     List<MemberPhoto> selectMemberPhotos(int memberNo);
+    
+    int updateProfileImageOrder(PreservedImage image);
 }

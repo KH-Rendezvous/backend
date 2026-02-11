@@ -81,6 +81,12 @@ public class MyPageServiceImpl implements MyPageService {
 		if (deleteList != null && !deleteList.isEmpty()) {
 			mapper.deleteProfileImages(deleteList);
 		}
+		
+		if (profileRequest.getPreservedImages() != null && !profileRequest.getPreservedImages().isEmpty()) {
+            for (MemberProfileRequest.PreservedImage img : profileRequest.getPreservedImages()) {
+                mapper.updateProfileImageOrder(img);
+            }
+        }
 
 		// 5. 이미지 업로드 및 수정 처리
 		if (images != null && !images.isEmpty()) {

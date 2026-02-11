@@ -49,4 +49,12 @@ public class MemberProfileRequest {
 	private String email;
 	private String createDate;
 	private String phone;
+	
+	private List<PreservedImage> preservedImages;
+
+    @Data
+    public static class PreservedImage {
+        private int photoId;
+        private int photoOrder;
+    }
 }

@@ -214,5 +214,11 @@
 		DEL_FL = 'Y'
 		WHERE MEMBER_NO = #{memberNo}
 	</update>
+	
+	<update id="updateProfileImageOrder" parameterType="edu.kh.project.member.model.dto.MemberProfileRequest$PreservedImage">
+        UPDATE MEMBER_PHOTOS
+        SET PHOTO_ORDER = #{photoOrder}
+        WHERE PHOTO_ID = #{photoId}
+    </update>
 
 </mapper>
