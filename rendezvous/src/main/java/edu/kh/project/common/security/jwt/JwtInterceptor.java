@@ -35,6 +35,7 @@ public class JwtInterceptor implements HandlerInterceptor {
 
         // 4. 검사 실패 (토큰이 없거나, 만료됨)
         // -> 401 Unauthorized 에러를 응답에 실어 보냄
+        response.setContentType("application/json; charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); 
         response.getWriter().write("Unauthorized");
         

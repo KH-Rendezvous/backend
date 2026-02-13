@@ -7,6 +7,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import edu.kh.project.common.interceptor.AdminCheckInterceptor;
 import edu.kh.project.common.security.jwt.JwtInterceptor;
 import lombok.RequiredArgsConstructor;
 
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class WebMvcConfig implements WebMvcConfigurer {
 
 	private final JwtInterceptor jwtInterceptor;
+	private final AdminCheckInterceptor adminInterceptor;
 
 	// 설정 파일에서 값 가져오기
 	@Value("${project.resource.webpath}")
@@ -32,19 +34,22 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/**") // 1. /api로 시작하는 모든 요청 검사
-				.excludePathPatterns( // 2. 예외 처리 (검사 안 할 목록)
-						"/api/member/login", // 로그인
-						"/api/member/signup", // 회원가입
-						"/api/member/check", // 중복검사
-						"/api/member/refresh", // ★ 토큰 재발급 (이거 막으면 갱신 못 함!)
-						"/api/member/logout", // 로그아웃
-						"/api/member/find-email",    // 이메일 찾기
-						"/api/member/check-info", // 회원 정보 확인
-						"/api/member/reset-password", // 비밀번호 찾기
-						"/api/email/**",       // 이메일 전송/인증 확인
-		                "/api/auth/**",        // 인증 관련
-		                "/api/main/support"    // 아까 보니까 이것도 있더만
-				);
+	  
+	  // 1. 토큰 검사 제외 경로 (따로 빼서 관리하면 수정할 때 편함)
+	  String[] excludePaths = {
+	    "/api/member/login", "/api/member/signup", "/api/member/check",
+	    "/api/member/refresh", "/api/member/logout", "/api/member/find-email",
+	    "/api/member/check-info", "/api/member/reset-password", "/api/email/**",
+	    "/api/auth/**", "/api/main/support"
+	  };
+
+	  // 2. JWT 인터셉터
+	  registry.addInterceptor(jwtInterceptor)
+	    .addPathPatterns("/api/**")
+	    .excludePathPatterns(excludePaths);
+
+	  // 3. 관리자 인터셉터 (한 칸 띄워서 구분)
+	  registry.addInterceptor(adminInterceptor)
+	    .addPathPatterns("/api/admin/**");
 	}
 }

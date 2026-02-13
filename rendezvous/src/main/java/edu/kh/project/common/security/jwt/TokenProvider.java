@@ -1,21 +1,24 @@
 package edu.kh.project.common.security.jwt;
 
-import io.jsonwebtoken.*;
+import java.security.Key;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Value; 
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value; // ★ 이거 import 확인
-import org.springframework.stereotype.Component;
-
-import java.security.Key;
-import java.util.Date;
 
 @Slf4j
 @Component
 public class TokenProvider {
 
     // 1. static final 제거하고 인스턴스 변수로 변경
-    // (application.properties에서 값 가져오기 위해)
     private final Key key;
 
     // 만료 시간 (필요하면 얘네도 properties로 뺄 수 있음)
@@ -33,17 +36,28 @@ public class TokenProvider {
     /**
      * 토큰 생성
      */
-    public String generateToken(String email, String type) {
+    public String generateToken(String email, int authority, String type) { 
         long expireTime = type.equals("Access") ? ACCESS_TOKEN_EXPIRE_TIME : REFRESH_TOKEN_EXPIRE_TIME;
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("authority", authority) 
                 .setExpiration(new Date(System.currentTimeMillis() + expireTime))
                 .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
     
-    // ... 나머지 메서드(getSubject, validateToken 등)는 그대로 ...
+    public int getAuthority(String token) {
+        Claims claims = parseClaims(token);
+        Object auth = claims.get("authority");
+        
+        // 없으면 기본값 1(일반유저) 리턴 (에러 방지용)
+        if (auth == null) return 1; 
+        
+        // 안전하게 형변환 (String으로 바꿨다가 int로 파싱)
+        return Integer.parseInt(String.valueOf(auth));
+    }
+    
     public String getSubject(String token) {
         return parseClaims(token).getSubject();
     }
