@@ -21,6 +21,7 @@ public class Member {
 	private String phone;
 	private String delFl;
 	private Date createDate;
+	private int authority;
 
 	// 위치
 	private double latitude;

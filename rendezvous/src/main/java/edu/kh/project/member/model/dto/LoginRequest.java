@@ -8,4 +8,5 @@ public class LoginRequest {
     private String password;
     private Double latitude;
     private Double longitude;
+    private int authority;
 }

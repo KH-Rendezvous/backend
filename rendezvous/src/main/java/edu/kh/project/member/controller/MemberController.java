@@ -32,147 +32,144 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MemberController {
 
-	private final MemberService service;
+    private final MemberService service;
+    private final TokenProvider tokenProvider;
 
-	private final TokenProvider tokenProvider;
+    @GetMapping("/logout")
+    @ResponseBody
+    public int logout(HttpSession session, @RequestParam("memberNo") int memberNo) {
+        session.invalidate();
+        return service.updateRefreshToken(memberNo, null);
+    }
 
-	@GetMapping("/logout")
-	@ResponseBody
-	public int logout(HttpSession session, @RequestParam("memberNo") int memberNo) {
+    @PostMapping("/signup")
+    @ResponseBody
+    public int signup(@RequestPart("data") SignupRequest input,
+                      @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        return service.signup(input, images);
+    }
 
-		// 1. 세션 만료 (기존 로직 유지)
-		session.invalidate();
+    // =========================================================================
+    // ★★★ [수정 1] 로그인 : 토큰 생성 시 권한(Authority) 추가
+    // =========================================================================
+    @PostMapping("/login")
+    @ResponseBody
+    public LoginResponse login(@RequestBody LoginRequest inputMember) {
 
-		// 2. DB의 리프레시 토큰을 NULL로 업데이트 (이제 memberNo를 아니까 에러 안 남)
-		return service.updateRefreshToken(memberNo, null);
-	}
+        Member loginMember = service.login(inputMember);
 
-	@PostMapping("/signup")
-	@ResponseBody
-	public int signup(@RequestPart("data") SignupRequest input, // JSON 데이터
-			@RequestPart(value = "images", required = false) List<MultipartFile> images // 이미지 파일들
-	) {
+        if (loginMember == null) {
+            return LoginResponse.builder().result(0).build();
+        }
 
-		return service.signup(input, images);
-	}
+        // 1. Access Token 생성 (이메일, 권한, 타입)
+        String accessToken = tokenProvider.generateToken(
+                loginMember.getEmail(), 
+                loginMember.getAuthority(), // ★ 권한 추가됨
+                "Access"
+        );
 
-	@PostMapping("/login")
-	@ResponseBody
-	public LoginResponse login(@RequestBody LoginRequest inputMember) {
+        // 2. Refresh Token 생성 (이메일, 권한, 타입)
+        String refreshToken = tokenProvider.generateToken(
+                loginMember.getEmail(), 
+                loginMember.getAuthority(), // ★ 권한 추가됨
+                "Refresh"
+        );
 
-		// 1. 아이디/비번 검사 (기존 서비스 로직)
-		Member loginMember = service.login(inputMember);
+        service.updateRefreshToken(loginMember.getMemberNo(), refreshToken);
 
-		// 2. 로그인 실패 시 (null 리턴)
-		if (loginMember == null) {
-			return LoginResponse.builder().result(0).build();
-		}
+        return LoginResponse.builder()
+                .result(1)
+                .member(loginMember)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
 
-		// 3. 토큰 생성 (Access, Refresh)
-		String accessToken = tokenProvider.generateToken(loginMember.getEmail(), "Access");
-		String refreshToken = tokenProvider.generateToken(loginMember.getEmail(), "Refresh");
+    // =========================================================================
+    // ★★★ [수정 2] 토큰 재발급 : 기존 토큰에서 권한 꺼내서 다시 넣기
+    // =========================================================================
+    @PostMapping("/refresh")
+    @ResponseBody
+    public Map<String, Object> refresh(@RequestBody Map<String, String> body) {
 
-		// 4. ★ DB에 Refresh Token 저장 (서비스 호출)
-		// ※ 주의: MemberService에 이 메서드 없으면 만들어야 함 (아래 참고)
-		service.updateRefreshToken(loginMember.getMemberNo(), refreshToken);
+        Map<String, Object> map = new HashMap<>();
+        String refreshToken = body.get("refreshToken");
 
-		// 5. 응답 (DTO에 담아서 리턴)
-		return LoginResponse.builder().result(1).member(loginMember).accessToken(accessToken).refreshToken(refreshToken)
-				.build();
-	}
+        if (!tokenProvider.validateToken(refreshToken)) {
+            throw new RuntimeException("유효하지 않은 Refresh Token입니다.");
+        }
 
-	@PostMapping("/refresh")
-	@ResponseBody
-	public java.util.Map<String, Object> refresh(@RequestBody java.util.Map<String, String> body) {
+        // 1. 이메일 추출
+        String email = tokenProvider.getSubject(refreshToken);
+        
+        // 2. 권한 추출 (TokenProvider에 getAuthority 메서드 있어야 함)
+        int authority = tokenProvider.getAuthority(refreshToken); 
 
-		java.util.Map<String, Object> map = new java.util.HashMap<>();
-		String refreshToken = body.get("refreshToken");
+        // 3. 새 Access Token 발급 (권한 포함)
+        String newAccessToken = tokenProvider.generateToken(email, authority, "Access");
 
-		// 1. Refresh Token 검증
-		// (TokenProvider에 validateToken 메서드가 있어야 함)
-		if (!tokenProvider.validateToken(refreshToken)) {
-			// 유효하지 않은 토큰이면 에러 처리 (프론트에서 로그아웃 시킴)
-			throw new RuntimeException("유효하지 않은 Refresh Token입니다.");
-		}
+        map.put("accessToken", newAccessToken);
 
-		// 2. 새로운 Access Token 생성
-		// (Refresh Token 안에 있는 이메일을 꺼내서 다시 만듦)
-		String email = tokenProvider.getSubject(refreshToken);
-		String newAccessToken = tokenProvider.generateToken(email, "Access");
+        return map;
+    }
 
-		// 3. 결과 응답
-		map.put("accessToken", newAccessToken);
+    @GetMapping("/check")
+    @ResponseBody
+    public int checkDuplicate(@RequestParam("type") String type, @RequestParam("value") String value) {
+        return service.checkDuplicate(type, value);
+    }
 
-		return map;
-	}
+    @PostMapping("/update-location")
+    @ResponseBody
+    public int updateLocation(@RequestBody Map<String, Object> map) {
+        int memberNo = Integer.parseInt(String.valueOf(map.get("memberNo")));
 
-	@GetMapping("/check")
-	@ResponseBody
-	public int checkDuplicate(@RequestParam("type") String type, @RequestParam("value") String value) {
-		// type: "email", "nickname", "phone" 중 하나
-		// value: 실제 입력값
-		return service.checkDuplicate(type, value);
-	}
+        if (map.get("latitude") == null || map.get("longitude") == null) {
+            return 0;
+        }
 
-	@PostMapping("/update-location")
-	@ResponseBody
-	public int updateLocation(@RequestBody Map<String, Object> map) {
+        Double lat = Double.parseDouble(String.valueOf(map.get("latitude")));
+        Double lon = Double.parseDouble(String.valueOf(map.get("longitude")));
 
-		// 프론트에서 { memberNo: 1, latitude: 37.5, longitude: 127.0 } 이렇게 보냄
-		int memberNo = Integer.parseInt(String.valueOf(map.get("memberNo")));
+        return service.updateLocation(memberNo, lat, lon);
+    }
 
-		// 위치 정보가 없는 경우 방지
-		if (map.get("latitude") == null || map.get("longitude") == null) {
-			return 0;
-		}
+    @PostMapping("/find-email")
+    public ResponseEntity<?> findEmail(@RequestBody Map<String, String> params) {
+        log.info("이메일 찾기 요청: {}", params);
 
-		Double lat = Double.parseDouble(String.valueOf(map.get("latitude")));
-		Double lon = Double.parseDouble(String.valueOf(map.get("longitude")));
+        try {
+            String email = service.findEmail(params);
+            if (email != null) {
+                Map<String, String> result = new HashMap<>();
+                result.put("email", email);
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("일치하는 회원이 없습니다.");
+            }
+        } catch (Exception e) {
+            log.error("이메일 찾기 중 에러 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 에러");
+        }
+    }
 
-		return service.updateLocation(memberNo, lat, lon);
-	}
-
-	// 이메일 찾기
-	@PostMapping("/find-email")
-	public ResponseEntity<?> findEmail(@RequestBody Map<String, String> params) {
-		log.info("이메일 찾기 요청: {}", params);
-		// params: {name=홍길동, birth=19990101, phone=01012341234}
-
-		try {
-			String email = service.findEmail(params);
-
-			if (email != null) {
-				Map<String, String> result = new HashMap<>();
-				result.put("email", email);
-				return ResponseEntity.ok(result);
-			} else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("일치하는 회원이 없습니다.");
-			}
-		} catch (Exception e) {
-			log.error("이메일 찾기 중 에러 발생", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 에러");
-		}
-	}
-	// 1. 회원 정보 일치 확인 (비밀번호 찾기 1단계)
     @PostMapping("/check-info")
     public ResponseEntity<?> checkInfo(@RequestBody Map<String, String> params) {
         log.info("비번찾기 정보확인 요청: {}", params);
-        // params: {email, name, birth, phone}
         
         int count = service.checkMemberInfo(params);
         
         if (count > 0) {
-            return ResponseEntity.ok(true); // 정보 일치
+            return ResponseEntity.ok(true); 
         } else {
-            return ResponseEntity.ok(false); // 불일치
+            return ResponseEntity.ok(false); 
         }
     }
 
-    // 2. 비밀번호 재설정 (비밀번호 찾기 2단계)
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> params) {
         log.info("비번 재설정 요청: {}", params.get("email"));
-        // params: {email, password}
         
         int result = service.resetPassword(params);
         
@@ -182,5 +179,4 @@ public class MemberController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("변경 실패");
         }
     }
-
 }
