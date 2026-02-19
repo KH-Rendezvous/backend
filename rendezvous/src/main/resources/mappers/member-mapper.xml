@@ -41,7 +41,7 @@
 		#{name}, #{nickname}, #{phone},
 		#{targetGender}, #{relIntentId},
 		0.0,
-		0.0, NULL, -- ★ [변경] 위경도: 0.0(임시값), 거리: NULL
+		0.0, NULL,
 		'N', SYSDATE
 		)
 	</insert>
